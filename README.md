@@ -2,6 +2,10 @@
 ### Internal-SIH Edition: Benchmarks → MoES Gaps → 9-Day Build → Post-Selection Roadmap
 **Sponsoring ministry: Ministry of Earth Sciences (MoES)**
 
+**Official scope (confirmed against the released problem statements):**
+- **PS59 — "AI-Enabled Antarctic Sea-Ice, Iceberg Trajectory, and Navigation Decision Support System."** Three explicit deliverables: (1) forecast Antarctic **sea-ice concentration**, (2) predict **iceberg trajectories**, (3) identify **safe and fuel-efficient navigation routes** for research vessels, using satellite, oceanographic, and meteorological data. Routing is an *optimization* problem (safe + fuel-efficient), not only a risk-flagging problem.
+- **PS70 — cyclone pattern system.** Identification, classification, and prediction of **different tropical cyclone patterns** using **multi-source satellite data** specifically (the official text does not cite NWP model guidance as an input — keep the MVP satellite-driven). This reads closer to an automated pattern-classification task (in the spirit of Dvorak-style structural classification) plus pattern-evolution prediction, rather than a full track/intensity NWP-style forecast.
+
 ---
 
 ## How This Version Is Different
@@ -68,8 +72,10 @@ Don't oversell ("India has nothing") or undersell ("MoES already solved this"). 
               ┌───────────────┴───────────────┐
           PS59 ENGINE                     PS70 ENGINE
          "PolarWatch"                   "CycloneWatch"
-     Detect → Track → Predict       Detect → Track → Predict
-     → Uncertainty → Route Risk     → Uncertainty → Hazard Risk
+   Sea-Ice Concentration Forecast   Detect → Classify Pattern
+   + Iceberg Detect/Track/Predict   → Track Pattern Evolution
+   → Uncertainty → Route Optimizer  → Uncertainty → Hazard Risk
+   (safe + fuel-efficient)
               └───────────────┬───────────────┘
                           SHARED UI
                     Decision Support Layer
@@ -143,9 +149,9 @@ A simpler model with real data and honest limitations beats a fancier model with
 | **1 — Foundation** | Repo, React shell, FastAPI shell, PostGIS, Leaflet, first dataset, first map layer, UI design system | One real dataset visible in the running app |
 | **2 — PS59 Detection** | SAR ingestion, preprocessing, CFAR, candidate detections, map markers | Real SAR scene → detected iceberg candidates → map |
 | **3 — PS59 Tracking** | Multi-frame association, track history, velocity, confidence | Real observations → continuous track |
-| **4 — PS59 Prediction** | Baseline drift model, environmental forcing, ML residual, uncertainty corridor | Current position → future trajectory + uncertainty |
-| **5 — PS59 Risk** | Route input, route-relative risk, alternative route, evidence panel | Prediction → risk → recommendation (flagship slice complete) |
-| **6 — PS70** | Historical satellite sequence, cyclone detection, centre estimation, track reconstruction, future-track baseline | Historical event → detected cyclone → track → prediction |
+| **4 — PS59 Prediction** | Baseline drift model, environmental forcing, ML residual, uncertainty corridor, **first-pass sea-ice concentration forecast layer** (this is an explicit, separately graded deliverable in the official PS59 text — don't fold it silently into iceberg tracking) | Current position → future trajectory + uncertainty; sea-ice concentration map for a forward window |
+| **5 — PS59 Route Optimization** | Route input, hazard/risk-aware **and fuel-efficiency-aware** route scoring (shortest-safe-path style optimization over the risk + sea-ice + distance surface, not just a LOW/MED/HIGH flag), alternative route, evidence panel | Prediction → candidate routes scored on safety *and* estimated fuel/distance cost → recommended route (flagship slice complete) |
+| **6 — PS70** | Historical multi-source satellite sequence (visible/IR/water-vapour/microwave — no NWP inputs, per the official scope), cyclone detection, **structural pattern classification** (eye/banding/curved-band/shear-affected type categories — the actual graded deliverable), centre estimation, track reconstruction, future pattern-evolution baseline | Historical event → detected cyclone → classified pattern type → track → pattern-evolution prediction |
 | **7 — Validation (mandatory)** | Backtests: detection/tracking/prediction metrics, uncertainty coverage, baseline comparison, charts | Every scientific claim has a measured number behind it |
 | **8 — Polish** | Typography, spacing, map, loading/error states, evidence cards, timeline, replay, responsiveness — **no new science** | A non-specialist judge understands the product in 10 seconds |
 | **9 — Demo + PPT + Q&A** | 10 full rehearsals, live demo + recorded fallback, PPT, architecture slide, metrics slide, Q&A sheet, offline demo | Team can run the full demo from a cold start with zero confusion |
@@ -229,4 +235,5 @@ The 9-day build is deliberately a *demonstration*, not a product. If the team ad
 
 Carried forward from the original architecture document (DMI/Copernicus CFAR methodology, NOAA HAFS, ECMWF AIFS and its 2026 error-correction pattern, IMD RSMC New Delhi cyclone-warning SOP, MOSDAC infrastructure, USNIC), the prior playbook's MoES/IMD gap research (IMD's 150th-anniversary vision document, officials' acknowledgment of small-scale/cloudburst forecasting difficulty, IMD–CWC integration gaps, observation-density and staffing constraints, reported hyperlocal trust disputes), and this session's 9-day execution structure as drafted by the team.
 
+*PS59 and PS70 official statement text confirmed directly by the team and incorporated above — this supersedes the earlier "verify against the portal" caveat from v1.*
 *Reminder: verify exact PS59/PS70 statement wording against the live sih.gov.in portal before finalizing the deck — some third-party trackers currently show only partial statement text.*
