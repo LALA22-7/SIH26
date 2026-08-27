@@ -1,0 +1,53 @@
+# ──────────────────────────────────────────────────────
+# CycloneWatch — DEV Docker Compose
+# Usage: docker compose up
+# ──────────────────────────────────────────────────────
+version: "3.9"
+
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: cyclonewatch_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cyclone}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cyclone_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-cyclonewatch}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cyclone} -d ${POSTGRES_DB:-cyclonewatch}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      target: dev
+    container_name: cyclonewatch_api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-cyclone}:${POSTGRES_PASSWORD:-cyclone_secret}@db:5432/${POSTGRES_DB:-cyclonewatch}
+      DATABASE_SYNC_URL: postgresql+psycopg2://${POSTGRES_USER:-cyclone}:${POSTGRES_PASSWORD:-cyclone_secret}@db:5432/${POSTGRES_DB:-cyclonewatch}
+      PYTHONPATH: /ml:/app
+      DEBUG: "true"
+    ports:
+      - "8000:8000"
+    volumes:
+      # Hot-reload: mount source
+      - .:/app
+      # ML package: mount from sibling folder
+      - ../ml:/ml
+      # Data: mount demo data
+      - ../data:/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
