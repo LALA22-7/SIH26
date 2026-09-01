@@ -1,0 +1,65 @@
+{
+  "_comment": "Model configuration for CycloneWatch PS70 classifier. Update when retraining.",
+
+  "model": {
+    "name": "ps70-classifier",
+    "version": "1.0.0",
+    "architecture": "CycloneCNN",
+    "checkpoint": "ml/checkpoints/model.pt"
+  },
+
+  "input": {
+    "in_channels": 2,
+    "channel_order": ["ir", "water_vapor"],
+    "shape": "[C, H, W]",
+    "note": "H and W are variable — AdaptiveAvgPool2d handles any spatial size"
+  },
+
+  "training": {
+    "predict_pattern": false,
+    "predict_confidence": false,
+    "num_classes": 5,
+    "epochs": 20,
+    "batch_size": 4,
+    "learning_rate": 0.001,
+    "optimizer": "Adam",
+    "center_loss": "MSELoss",
+    "center_loss_weight": 1.0,
+    "val_fraction": 0.15,
+    "split_seed": 42
+  },
+
+  "outputs": {
+    "center": "lat/lon regression — TRAINED",
+    "pattern": "5-class classification — NOT YET TRAINED (predict_pattern=false)",
+    "confidence": "scalar — NOT YET TRAINED (predict_confidence=false)"
+  },
+
+  "labels": {
+    "0": "eye",
+    "1": "banding",
+    "2": "curved_band",
+    "3": "shear_affected",
+    "4": "disorganized"
+  },
+
+  "normalization": {
+    "method": "per_frame_min_max",
+    "note": "Applied by standardize_data.py. Do NOT re-normalize inside the model or dataset."
+  },
+
+  "training_data": {
+    "events": ["biparjoy_2023", "amphan_2020"],
+    "total_frames": 122,
+    "pattern_labels": "unlabeled — pattern head training blocked until Research delivers labels",
+    "manifest": "data/training_manifest.csv"
+  },
+
+  "status": {
+    "centre_prediction": "trained",
+    "pattern_classification": "pending — blocked on Research label CSV",
+    "confidence_calibration": "pending — Day 6",
+    "temporal_model": "pending — persistence fallback active in inference.py",
+    "freeze_date": null
+  }
+}

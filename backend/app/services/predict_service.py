@@ -24,7 +24,7 @@ import numpy as np
 from shapely.geometry import mapping, Point
 from shapely.affinity import scale
 
-from app.services.classify_service import _load_frame_array
+from app.services.classify_service import _load_frame_array, _normalise_pattern
 from app.services.ml_adapter import run_predict
 
 logger = logging.getLogger(__name__)
@@ -86,8 +86,8 @@ def _build_sequence(
         arrays.append(arr)
 
     if not arrays:
-        logger.warning("[PREDICT SERVICE] Empty sequence — using mock [1, 3, 256, 256]")
-        return np.zeros((1, 3, 256, 256), dtype=np.float32)
+        logger.warning("[PREDICT SERVICE] Empty sequence — using mock [1, 2, 256, 256]")
+        return np.zeros((1, 2, 256, 256), dtype=np.float32)
 
     # Stack on new axis 0 → [T, C, H, W]
     sequence = np.stack(arrays, axis=0)
@@ -150,7 +150,7 @@ def run_prediction(
             "valid_time": valid_time,
             "horizon_hours": horizon_hours,
             "center": pred["center"],
-            "pattern": pred["pattern"],
+            "pattern": _normalise_pattern(pred.get("pattern")),
             "sigma_lat": sigma_lat,
             "sigma_lon": sigma_lon,
             "uncertainty_polygon": uncertainty_polygon,

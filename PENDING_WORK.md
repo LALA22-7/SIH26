@@ -1,6 +1,6 @@
 # CycloneWatch — Pending Work Tracker
 
-> **Last updated:** 2026-09-01  
+> **Last updated:** 2026-09-01 → updated 2026-09-02 after ML repo integration  
 > **Sprint:** SIH 2026 PS70 — 8-Day  
 > **Lead:** Satyam Srivastava  
 >
@@ -30,9 +30,9 @@
 | B4 | Seed script + precompute replay script | ✅ Done | — | scripts/seed_db.py, scripts/precompute_replay.py |
 | B5 | Wire calibrated uncertainty | 🔴 Blocked | ML Day-6 calibration | ~1h work once ML delivers real sigma values |
 | B6 | Load Research ground-truth labels | 🔴 Blocked | Research label CSV | ~1h — run scripts/load_ground_truth.py once CSV arrives |
-| B7 | Register real satellite frames in DB | 🔴 Blocked | Data normalized files | Update seed_db.py with real file paths, ~1h |
+| B7 | Register real satellite frames in DB | 🟢 Ready | — | data/normalized/ now committed (122 frames). Update seed_db.py with real npz paths, ~1h |
 | B8 | Satellite XYZ tile serving (if needed) | 🔴 Blocked | Frontend confirms Leaflet format | ~2-3h only if raw GeoTIFF won't work in Leaflet |
-| B9 | Second event (Amphan) support | 🔴 Blocked | Data + Research for Amphan frames | Data registration only, ~30 min |
+| B9 | Second event (Amphan) support | 🟢 Ready | — | Amphan frames in data/normalized/. Register in DB, ~30 min |
 | B10 | Baseline MAE wiring in /api/metrics | 🔴 Blocked | ML persistence baseline numbers | ~30 min once ML provides baseline MAE values |
 | B11 | scripts/load_ground_truth.py | 🟢 Ready | — | Small script to load Research label CSV into metrics table |
 | B12 | Day-7 API freeze + stress test | 🔴 Blocked | All other teams done | Full stress test + git tag v1.0-day7-freeze |
@@ -43,23 +43,26 @@
 
 | # | Task | Status | Blocked on | Notes |
 |---|---|---|---|---|
-| M1 | PyTorch environment + dataloader | 🟡 In Progress | — | Needed before any model training |
-| M2 | Day-1 classification stub JSON | 🟢 Ready | — | Backend already has its own stub — ML stub for their own testing |
-| M3 | CNN classification model (centre + pattern + confidence) | 🟡 In Progress | M1, Data frames | Output contract: predict_frame([C,H,W]) → dict |
-| M4 | Temporal prediction model T+12/T+24 | 🟡 In Progress | M3 | Output contract: predict_sequence([T,C,H,W]) → dict |
-| M5 | **Deliver ml/inference.py** | 🟢 Ready | M3, M4 | THIS IS THE #1 BACKEND DEPENDENCY. See backend/README.md for exact contract |
-| M6 | Confidence calibration (Day 6) | 🔴 Blocked | M3 trained | Provide real sigma_lat, sigma_lon values in predict_sequence output |
-| M7 | Baseline persistence model + MAE | 🟡 In Progress | Data frames | Needed for /api/metrics baseline comparison |
-| M8 | Known limitations document | 🟢 Ready | — | One paragraph, needed for Day-4 mentor checkpoint |
-| M9 | Model manifest (freeze Day 7) | 🔴 Blocked | M3, M4 complete | docs/model_manifest.json with checkpoint paths + versions |
+| M1 | PyTorch environment + dataloader | ✅ Done | — | ml/src/dataset.py committed, CycloneDataset loads real npz frames |
+| M2 | Day-1 classification stub JSON | ✅ Done | — | Backend stub active; ml/inference.py also functional in stub fallback |
+| M3 | CNN classification model (centre + pattern + confidence) | 🟡 In Progress | — | Centre head trained ✅ — model.pt committed. Pattern + confidence heads pending Research labels |
+| M4 | Temporal prediction model T+12/T+24 | 🟡 In Progress | M3 | Provisional persistence fallback active in inference.py. Real temporal model still needed |
+| M5 | **Deliver ml/inference.py** | 🟡 In Progress | M3 pattern head | ml/inference.py committed ✅. predict_frame() + predict_sequence() both working. Pattern returns "unlabeled" until retrained |
+| M6 | Confidence calibration (Day 6) | 🔴 Blocked | M3 pattern head trained | Provide real sigma_lat, sigma_lon + flip predict_confidence=True |
+| M7 | Baseline persistence model + MAE | 🟡 In Progress | — | predict_sequence() uses persistence fallback — this IS the baseline. Measure its MAE via /api/metrics |
+| M8 | Known limitations document | 🟢 Ready | — | ml/README.md has known limitations section. Expand into docs/limitations.md |
+| M9 | Model manifest (freeze Day 7) | 🟢 Ready | — | ml/configs/model_config.json created. Finalise on Day 7 |
 | M10 | Freeze models | 🔴 Blocked | Day 7 | No training changes after this point |
 
-**Critical contract for backend integration:**
+**ML contract status: ✅ DONE**
 ```
-ml/inference.py must export:
-  predict_frame(frame: np.ndarray)      # shape [C, H, W]
-  predict_sequence(seq: np.ndarray)     # shape [T, C, H, W]
-See backend/README.md → ML Team integration steps for full spec.
+ml/inference.py is committed and exports:
+  predict_frame(frame: np.ndarray)     # shape [C, H, W]  ← WORKING
+  predict_sequence(seq: np.ndarray)    # shape [T, C, H, W] ← WORKING (provisional)
+
+Current centre prediction: REAL (model.pt loaded)
+Current pattern: "unlabeled" until retrained with Research labels
+Current temporal: persistence fallback — replace with real model on Day 3
 ```
 
 ---
@@ -73,12 +76,12 @@ See backend/README.md → ML Team integration steps for full spec.
 | D3 | aws_downloader.py — GridSat-B1 download | ✅ Done | — | scripts/aws_downloader.py committed, run locally |
 | D4 | standardize_data.py — NetCDF → [C,H,W] npz | ✅ Done | D3 | scripts/standardize_data.py committed |
 | D5 | validate_and_join.py — ground-truth join | ✅ Done | D4, D2 | scripts/validate_and_join.py committed |
-| D6 | **Actually download Biparjoy satellite data** | 🟡 In Progress | NOAA S3 access | Run: python scripts/aws_downloader.py |
-| D7 | **Actually run standardize_data.py on downloads** | 🔴 Blocked | D6 | Produces data/normalized/<event>/frames/*.npz |
-| D8 | Register real frames in backend DB | 🔴 Blocked | D7 | Update backend/scripts/seed_db.py with real file paths, coordinate with Satyam |
-| D9 | Download Amphan satellite data | 🟡 In Progress | NOAA S3 access | Same process as D6 |
-| D10 | Expanded event set (beyond Biparjoy + Amphan) | 🔴 Blocked | D6-D7 complete first | Do not add more events until the 2 primary events are fully processed |
-| D11 | Validation report (validate_data.py output) | 🔴 Blocked | D7 | Run validate_and_join.py → data/training_manifest.csv |
+| D6 | **Download Biparjoy satellite data** | ✅ Done | — | 88 frames in data/normalized/biparjoy_2023/frames/ (GridSat-B1, IR+WV) |
+| D7 | **Run standardize_data.py → normalized npz frames** | ✅ Done | — | 122 total frames committed (biparjoy: 88, amphan: 34), shape [2,H,W] |
+| D8 | Register real frames in backend DB | 🟢 Ready | — | Frames exist. Update backend/scripts/seed_db.py with real npz paths, coordinate with Satyam |
+| D9 | Download Amphan satellite data | ✅ Done | — | 34 frames in data/normalized/amphan_2020/frames/ |
+| D10 | Expanded event set (beyond Biparjoy + Amphan) | 🔴 Blocked | D6-D7 complete first | ✅ Primary events done. Expand only if time permits after Day-4 checkpoint |
+| D11 | Validation report | ✅ Done | — | data/training_manifest.csv committed (122 rows, all PASS, centre positions joined) |
 | D12 | Ground-truth visible data (if available) | 🟢 Ready | — | Include if aligned visible channel exists; never show wrong band as visible |
 
 ---
@@ -144,7 +147,7 @@ Any change requires coordinating with Satyam for a DB migration.
 
 | # | Task | Status | Blocked on | Notes |
 |---|---|---|---|---|
-| X1 | Run precompute_replay.py with real data | 🔴 Blocked | D7 + M5 + R5 | Populates DB for offline replay demo |
+| X1 | Run precompute_replay.py with real data | 🟡 In Progress | R5 (ground-truth labels) | M5 ✅ D7 ✅ — only blocked on Research label CSV now. Run once R5 arrives |
 | X2 | Verify /api/metrics shows real numbers | 🔴 Blocked | X1 | mae_km_t12/t24 must be non-null floats |
 | X3 | Full offline demo test (internet off) | 🔴 Blocked | X1, F6, A5 | Disable WiFi, verify every endpoint responds |
 | X4 | Day-4 mentor checkpoint demo | 🔴 Blocked | Day 4 | Bring: satellite frame, classification, prediction, replay, evidence panel, measured error |
@@ -159,12 +162,12 @@ Any change requires coordinating with Satyam for a DB migration.
 
 | Priority | Who | Action |
 |---|---|---|
-| 🔥 1 | Aditya (ML) | Start working on ml/inference.py — backend is waiting, this is the biggest blocker |
-| 🔥 2 | Abhinav (Data) | Run `python scripts/aws_downloader.py` — downloads take time, start now |
-| 🔥 3 | Arshit (Research) | Finalise and send the pattern label set to Satyam — must be locked before ML trains |
-| 🔥 4 | Kavya (Frontend) | Confirm with Satyam by Day 3 whether Leaflet needs XYZ tiles or raw GeoTIFF |
-| 🔥 5 | Aniket (App) | Save stub API responses as offline fixture files now — works today without waiting |
-| 🔥 6 | Satyam (Backend) | Create scripts/load_ground_truth.py once Research delivers label CSV |
+| 🔥 1 | Arshit (Research) | **Finalise + send pattern label CSV** — this is now the single biggest blocker. ML cannot train pattern head, backend accuracy metric stays null, precompute_replay produces no labels without it |
+| 🔥 2 | Satyam (Backend) | **Register real frames in DB** — run `python -m scripts.seed_db --reset` after updating seed_db.py with real npz paths from data/normalized/ |
+| 🔥 3 | Satyam (Backend) | **Create scripts/load_ground_truth.py** — small script ready to run the moment Research delivers labels |
+| 🔥 4 | Kavya (Frontend) | **Confirm Leaflet tile format** — raw GeoTIFF or XYZ tiles? Decide by Day 3 or the tile endpoint can't be built in time |
+| 🔥 5 | Aditya (ML) | **Retrain with pattern labels** the moment Research delivers the CSV — set PREDICT_PATTERN=True and run `python -m ml.src.train` |
+| 🔥 6 | Aniket (App) | **Save stub API responses as offline fixtures** — backend API is live right now, do this today |
 
 ---
 
