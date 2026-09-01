@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cyclone Ops Console — Shell</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --abyss: #0A0F1A;
+    --panel: #121A2B;
+    --panel-2: #182338;
+    --grid: #223049;
+    --cyan: #4DD8C4;
+    --cyan-dim: rgba(77,216,196,0.18);
+    --amber: #F2A93B;
+    --fog: #E7ECF3;
+    --fog-dim: #7C8AA3;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; background:var(--abyss); overflow:hidden; }
+  body{ font-family:var(--sans); color:var(--fog); }
+
+  #map{ position:absolute; inset:0; z-index:0; filter: saturate(0.85) brightness(0.9); }
+
+  /* channel tint overlay — simulates band colorization until real tile sources are wired in */
+  #channelTint{
+    position:absolute; inset:0; z-index:1; pointer-events:none;
+    mix-blend-mode: color; opacity:0.55; transition: background 0.35s ease, opacity 0.35s ease;
+  }
+  #channelTint.visible{ background: linear-gradient(160deg, #9aa3ad, #4a4f57); opacity:0.25; }
+  #channelTint.infrared{ background:
+      radial-gradient(circle at 30% 30%, #fff2c2 0%, #f2a93b 18%, #d94f2b 34%, #7a1f3d 52%, #1b1030 72%, #05030a 100%);
+    opacity:0.65; }
+  #channelTint.watervapor{ background: linear-gradient(160deg, #0d2b4a, #1c5c86 40%, #6fc7d9 70%, #eaf6f8 100%); opacity:0.5; }
+
+  /* subtle scanline / vignette for console feel */
+  #vignette{
+    position:absolute; inset:0; z-index:2; pointer-events:none;
+    box-shadow: inset 0 0 140px 40px rgba(10,15,26,0.85);
+  }
+
+  /* ---------- top console strip ---------- */
+  #topBar{
+    position:absolute; top:0; left:0; right:0; z-index:10;
+    height:64px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 20px; background:linear-gradient(180deg, rgba(10,15,26,0.96), rgba(10,15,26,0.75));
+    border-bottom:1px solid var(--grid);
+  }
+  .clockBlock{ display:flex; flex-direction:column; gap:2px; }
+  .eyebrow{ font-family:var(--mono); font-size:10px; letter-spacing:0.18em; color:var(--fog-dim); text-transform:uppercase; }
+  .clockValue{ font-family:var(--mono); font-size:18px; color:var(--fog); font-weight:500; letter-spacing:0.02em; }
+  .statusDot{ display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--amber); margin-right:6px;
+    box-shadow:0 0 6px var(--amber); animation:pulse 2.2s infinite ease-in-out; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+
+  #stormSelector{ display:flex; gap:2px; background:var(--panel); border:1px solid var(--grid); border-radius:6px; padding:3px; }
+  .stormBtn{
+    font-family:var(--mono); font-size:13px; letter-spacing:0.05em; font-weight:600;
+    color:var(--fog-dim); background:transparent; border:none; padding:8px 18px; border-radius:4px;
+    cursor:pointer; transition:all 0.2s ease;
+  }
+  .stormBtn.active{ color:var(--abyss); background:var(--amber); box-shadow:0 0 14px rgba(242,169,59,0.4); }
+  .stormBtn:not(.active):hover{ color:var(--fog); background:var(--panel-2); }
+
+  .readout{ text-align:right; display:flex; flex-direction:column; gap:2px; }
+  .readoutValue{ font-family:var(--mono); font-size:13px; color:var(--cyan); }
+
+  /* ---------- layer toggle (signature element) ---------- */
+  #layerPanel{
+    position:absolute; top:84px; left:20px; z-index:10;
+    display:flex; flex-direction:column; gap:6px;
+    background:rgba(18,26,43,0.92); border:1px solid var(--grid); border-radius:8px; padding:10px;
+    backdrop-filter:blur(6px);
+  }
+  .layerPanelLabel{ font-family:var(--mono); font-size:10px; letter-spacing:0.16em; color:var(--fog-dim); text-transform:uppercase; padding:2px 6px 6px; }
+  .layerBtn{
+    display:flex; align-items:center; gap:10px; background:transparent; border:none; cursor:pointer;
+    padding:8px 10px; border-radius:6px; border-left:2px solid transparent; transition:all 0.2s ease; width:200px;
+  }
+  .layerBtn:hover{ background:var(--panel-2); }
+  .layerBtn.active{ background:var(--cyan-dim); border-left:2px solid var(--cyan); }
+  .swatch{ width:34px; height:20px; border-radius:3px; border:1px solid rgba(255,255,255,0.15); flex-shrink:0; }
+  .swatch.vis{ background:linear-gradient(160deg, #cfd6dc, #5b6270); }
+  .swatch.ir{ background: radial-gradient(circle at 30% 30%, #fff2c2 0%, #f2a93b 22%, #d94f2b 45%, #7a1f3d 68%, #1b1030 100%); }
+  .swatch.wv{ background:linear-gradient(160deg, #0d2b4a, #1c5c86 45%, #eaf6f8 100%); }
+  .layerText{ display:flex; flex-direction:column; align-items:flex-start; gap:1px; }
+  .layerName{ font-family:var(--sans); font-size:13px; font-weight:600; color:var(--fog); }
+  .layerFreq{ font-family:var(--mono); font-size:10px; color:var(--fog-dim); }
+
+  /* ---------- footer ---------- */
+  #footerBar{
+    position:absolute; bottom:0; left:0; right:0; z-index:10;
+    height:32px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 20px; background:rgba(10,15,26,0.85); border-top:1px solid var(--grid);
+  }
+  .footerText{ font-family:var(--mono); font-size:10px; letter-spacing:0.1em; color:var(--fog-dim); text-transform:uppercase; }
+  .footerText.right{ color:var(--fog-dim); }
+
+  .leaflet-control-zoom{ border:1px solid var(--grid) !important; }
+  .leaflet-control-zoom a{ background:var(--panel) !important; color:var(--fog) !important; border-color:var(--grid) !important; }
+  .leaflet-control-zoom a:hover{ background:var(--panel-2) !important; color:var(--cyan) !important; }
+  .leaflet-control-attribution{ background:rgba(10,15,26,0.7) !important; color:var(--fog-dim) !important; font-family:var(--mono); font-size:9px !important; }
+  .leaflet-control-attribution a{ color:var(--fog-dim) !important; }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+<div id="channelTint" class="visible"></div>
+<div id="vignette"></div>
+
+<div id="topBar">
+  <div class="clockBlock">
+    <div class="eyebrow"><span class="statusDot"></span>Mission Clock · UTC</div>
+    <div class="clockValue" id="clockValue">--:--:--</div>
+  </div>
+
+  <div id="stormSelector">
+    <button class="stormBtn active" id="btnBiparjoy" onclick="selectStorm('biparjoy')">BIPARJOY '23</button>
+    <button class="stormBtn" id="btnAmphan" onclick="selectStorm('amphan')">AMPHAN '20</button>
+  </div>
+
+  <div class="readout">
+    <div class="eyebrow" id="basinLabel">Arabian Sea · RSMC New Delhi</div>
+    <div class="readoutValue" id="latlonReadout">22.500N · 70.000E</div>
+  </div>
+</div>
+
+<div id="layerPanel">
+  <div class="layerPanelLabel">Satellite Band</div>
+  <button class="layerBtn active" id="btnVis" onclick="selectChannel('visible')">
+    <span class="swatch vis"></span>
+    <span class="layerText"><span class="layerName">Visible</span><span class="layerFreq">0.65 µm</span></span>
+  </button>
+  <button class="layerBtn" id="btnIr" onclick="selectChannel('infrared')">
+    <span class="swatch ir"></span>
+    <span class="layerText"><span class="layerName">Infrared</span><span class="layerFreq">10.8 µm</span></span>
+  </button>
+  <button class="layerBtn" id="btnWv" onclick="selectChannel('watervapor')">
+    <span class="swatch wv"></span>
+    <span class="layerText"><span class="layerName">Water Vapor</span><span class="layerFreq">6.2 µm</span></span>
+  </button>
+</div>
+
+<div id="footerBar">
+  <div class="footerText">North Indian Ocean Basin · Structured-Data Track</div>
+  <div class="footerText right" id="zoomHint">Zoom 5</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+  const STORMS = {
+    biparjoy: { center:[22.9, 70.5], zoom:6, basin:'Arabian Sea · RSMC New Delhi' },
+    amphan:   { center:[21.6, 88.3], zoom:6, basin:'Bay of Bengal · RSMC New Delhi' }
+  };
+
+  const map = L.map('map', { zoomControl:true, attributionControl:true })
+    .setView(STORMS.biparjoy.center, STORMS.biparjoy.zoom);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    subdomains: 'abcd',
+    maxZoom: 12
+  }).addTo(map);
+
+  function updateReadout(){
+    const c = map.getCenter();
+    document.getElementById('latlonReadout').textContent =
+      `${c.lat.toFixed(3)}N · ${c.lng.toFixed(3)}E`;
+    document.getElementById('zoomHint').textContent = `Zoom ${map.getZoom()}`;
+  }
+  map.on('move zoom', updateReadout);
+  updateReadout();
+
+  function selectStorm(name){
+    document.getElementById('btnBiparjoy').classList.toggle('active', name==='biparjoy');
+    document.getElementById('btnAmphan').classList.toggle('active', name==='amphan');
+    const s = STORMS[name];
+    map.flyTo(s.center, s.zoom, { duration:1.1 });
+    document.getElementById('basinLabel').textContent = s.basin;
+  }
+
+  function selectChannel(name){
+    ['btnVis','btnIr','btnWv'].forEach(id => document.getElementById(id).classList.remove('active'));
+    const map_ = { visible:'btnVis', infrared:'btnIr', watervapor:'btnWv' };
+    document.getElementById(map_[name]).classList.add('active');
+    const tint = document.getElementById('channelTint');
+    tint.className = name;
+  }
+
+  function tickClock(){
+    const now = new Date();
+    const hh = String(now.getUTCHours()).padStart(2,'0');
+    const mm = String(now.getUTCMinutes()).padStart(2,'0');
+    const ss = String(now.getUTCSeconds()).padStart(2,'0');
+    document.getElementById('clockValue').textContent = `${hh}:${mm}:${ss}Z`;
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+</script>
+
+</body>
+</html>

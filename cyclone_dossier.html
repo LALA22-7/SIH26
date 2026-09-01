@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cyclone Dossier: Biparjoy (2023) &amp; Amphan (2020)</title>
+<style>
+  :root {
+    --navy: #0B3C5D;
+    --teal: #1F6F8B;
+    --light-bg: #E8F1F5;
+    --row-alt: #F7FAFB;
+    --border: #CCCCCC;
+    --text-muted: #555555;
+    --text-small: #666666;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    line-height: 1.6;
+    background: #ffffff;
+  }
+
+  /* ---------- Cover ---------- */
+  .cover {
+    padding: 60px 0 40px;
+    border-bottom: 3px solid var(--navy);
+    margin-bottom: 40px;
+  }
+  .cover h1 {
+    font-size: 2.4rem;
+    color: var(--navy);
+    margin: 0 0 6px;
+  }
+  .cover .subtitle {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+  .cover .meta {
+    margin-top: 24px;
+    font-size: 0.95rem;
+  }
+  .cover .meta p { margin: 6px 0; }
+  .cover .compiled-note {
+    margin-top: 40px;
+    font-size: 0.8rem;
+    color: var(--text-small);
+    max-width: 640px;
+  }
+
+  /* ---------- Section headings ---------- */
+  h2.section {
+    font-size: 1.4rem;
+    color: var(--navy);
+    border-left: 5px solid var(--navy);
+    padding-left: 12px;
+    margin-top: 48px;
+    margin-bottom: 14px;
+  }
+  h3.subsection {
+    font-size: 1.1rem;
+    color: var(--teal);
+    margin-top: 28px;
+    margin-bottom: 10px;
+  }
+  p.lede { font-size: 0.98rem; margin-bottom: 18px; }
+
+  /* ---------- Tables ---------- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-size: 0.92rem;
+  }
+  thead th {
+    background: var(--navy);
+    color: #ffffff;
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 600;
+  }
+  tbody td {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) { background: var(--row-alt); }
+
+  /* key/value stat tables: bold navy first column */
+  table.stat-table td:first-child {
+    background: var(--light-bg);
+    color: var(--navy);
+    font-weight: 600;
+    width: 32%;
+  }
+
+  /* timeline tables */
+  table.timeline-table td:nth-child(1) { font-weight: 600; color: var(--navy); white-space: nowrap; }
+  table.timeline-table { font-size: 0.87rem; }
+
+  /* comparison table */
+  table.compare-table th:not(:first-child),
+  table.compare-table td:not(:first-child) { text-align: left; }
+  table.compare-table td:first-child {
+    background: var(--light-bg);
+    color: var(--navy);
+    font-weight: 600;
+  }
+
+  .caption {
+    font-size: 0.85rem;
+    color: #444444;
+    background: #F4F8FA;
+    border-left: 3px solid var(--teal);
+    padding: 10px 14px;
+    margin: 8px 0 22px;
+  }
+
+  ul.impact-list, ul.notes-list {
+    margin: 10px 0 22px;
+    padding-left: 22px;
+  }
+  ul.impact-list li, ul.notes-list li {
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+  }
+  ul.notes-list code {
+    background: #eef3f5;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.85em;
+    color: #0B3C5D;
+  }
+
+  hr.divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 36px 0 16px;
+  }
+
+  .sources {
+    font-size: 0.78rem;
+    color: var(--text-small);
+    line-height: 1.5;
+  }
+
+  .page-break { page-break-before: always; }
+
+  @media print {
+    body { padding: 0 20px; }
+    .cover { border-bottom-color: var(--navy); }
+  }
+
+  @media (max-width: 600px) {
+    table.timeline-table, table.compare-table { font-size: 0.78rem; }
+    thead th, tbody td { padding: 7px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- COVER -->
+<!-- ============================================================ -->
+<div class="cover">
+  <h1>Cyclone Dossier</h1>
+  <p class="subtitle">Historical Ground-Truth Reference: Cyclone Biparjoy (2023) &amp; Cyclone Amphan (2020)</p>
+  <div class="meta">
+    <p><strong>Prepared for:</strong> ML cyclone-tracking / pattern-classification project — structured-data track (IBTrACS best-track ground truth, event background, MoES/IMD context)</p>
+    <p><strong>Scope:</strong> North Indian Ocean basin, Regional Specialized Meteorological Centre (RSMC) New Delhi (India Meteorological Department) area of responsibility.</p>
+  </div>
+  <p class="compiled-note">
+    Compiled from: Wikipedia (cyclone articles), NASA Earth Observatory, IMD/JTWC post-storm reporting summaries,
+    peer-reviewed post-storm analyses (arXiv, Springer), and contemporary news coverage. All figures should be
+    cross-checked against the official IBTrACS CSV / IMD best-track reports before use in model validation.
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<!-- 1. BIPARJOY -->
+<!-- ============================================================ -->
+<h2 class="section">1. Extremely Severe Cyclonic Storm Biparjoy (2023)</h2>
+<p class="lede">
+  Biparjoy was a long-lived, erratic tropical cyclone over the Arabian Sea — the third depression and second
+  cyclonic storm of the 2023 North Indian Ocean cyclone season. Its name means "disaster"/"calamity" (Bengali).
+  It is notable for an unusually long duration over open water (about 13 days) and multiple intensification/weakening
+  cycles before landfall in Gujarat.
+</p>
+
+<h3 class="subsection">1.1 Key Statistics</h3>
+<table class="stat-table">
+  <thead><tr><th>Field</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Formed</td><td>6 June 2023 (depression, IMD)</td></tr>
+    <tr><td>Dissipated</td><td>19 June 2023 (weakened to well-marked low)</td></tr>
+    <tr><td>Peak classification (IMD)</td><td>Extremely Severe Cyclonic Storm</td></tr>
+    <tr><td>Peak classification (JTWC)</td><td>Category 3-equivalent tropical cyclone</td></tr>
+    <tr><td>Highest winds — IMD (3-min sustained)</td><td>165 km/h (105 mph)</td></tr>
+    <tr><td>Highest winds — JTWC (1-min sustained)</td><td>205 km/h (125 mph)</td></tr>
+    <tr><td>Lowest central pressure (IMD)</td><td>958 hPa</td></tr>
+    <tr><td>Lowest central pressure (JTWC)</td><td>944 hPa</td></tr>
+    <tr><td>Landfall location</td><td>Near Jakhau Port / Naliya, Gujarat, India (Mandvi–Karachi stretch)</td></tr>
+    <tr><td>Landfall date/time</td><td>15–16 June 2023 (≈19:00–22:00 IST, 15 June)</td></tr>
+    <tr><td>Landfall intensity</td><td>Very Severe Cyclonic Storm; sustained ~115–140 km/h, gusts to ~140–145 km/h</td></tr>
+    <tr><td>Basin / Sub-basin</td><td>North Indian Ocean — Arabian Sea (ARB)</td></tr>
+    <tr><td>Areas affected</td><td>India (Gujarat), Pakistan (Sindh)</td></tr>
+    <tr><td>Fatalities</td><td>17 total</td></tr>
+    <tr><td>Injuries</td><td>24</td></tr>
+    <tr><td>Estimated damage</td><td>US$148 million (2023 USD)</td></tr>
+    <tr><td>People evacuated</td><td>&gt;170,000–180,000 across India &amp; Pakistan (~94,000+ in Gujarat alone)</td></tr>
+  </tbody>
+</table>
+
+<h3 class="subsection">1.2 Meteorological Timeline</h3>
+<table class="timeline-table">
+  <thead>
+    <tr><th>Date</th><th>Stage</th><th>Basin position</th><th>Max winds (approx.)</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>6 Jun 2023</td><td>Depression</td><td>East-central Arabian Sea</td><td>—</td><td>First noted by IMD</td></tr>
+    <tr><td>8–9 Jun 2023</td><td>Cyclonic Storm</td><td>Arabian Sea, moving N/NNW</td><td>65–85 km/h</td><td>Slow northward track begins</td></tr>
+    <tr><td>11–12 Jun 2023</td><td>Very Severe Cyclonic Storm</td><td>East-central Arabian Sea</td><td>~150–165 km/h</td><td>Rapid strengthening phase; IMD issues evacuation alerts for Gujarat</td></tr>
+    <tr><td>14 Jun 2023</td><td>Category 1 (SSHWS)</td><td>Approaching Gujarat/Sindh coast</td><td>~129 km/h</td><td>NOAA-20/VIIRS imagery captured; slow ~8 days spent over open Arabian Sea</td></tr>
+    <tr><td>15 Jun 2023 (evening)</td><td>Landfall</td><td>Near Jakhau Port, Gujarat</td><td>115–140 km/h, gusts ~140–145 km/h</td><td>Landfall process began evening, continued to ~midnight</td></tr>
+    <tr><td>16 Jun 2023</td><td>Weakening / Depression</td><td>Interior Gujarat/Rajasthan</td><td>~78 km/h and falling</td><td>Wind speed dropped sharply post-landfall</td></tr>
+    <tr><td>19 Jun 2023</td><td>Dissipated</td><td>Well-marked low-pressure area</td><td>—</td><td>System fully dissipated</td></tr>
+  </tbody>
+</table>
+<div class="caption">
+  Structural note for pattern-classification labeling: Biparjoy is a good "slow evolution / long track" test case —
+  it shows an eye/eyewall-dominant structure at peak intensity (11–13 June), followed by a shear-affected,
+  asymmetric phase as it accelerated northeast and interacted with drier air near the coast, then a rapid
+  landfall-degrading collapse after 15 June.
+</div>
+
+<h3 class="subsection">1.3 Impact Summary</h3>
+<ul class="impact-list">
+  <li>Roofs blown off, thousands of trees and ~700+ electricity poles uprooted across eight affected Gujarat districts (Kutch, Saurashtra region).</li>
+  <li>Storm surge and heavy rainfall caused coastal flooding; rail network disruptions reported.</li>
+  <li>No large-scale loss of life at landfall itself (attributed to large-scale pre-emptive evacuation); most fatalities were indirect (drowning, wall collapse, accidents).</li>
+  <li>Both India and Pakistan carried out coordinated mass evacuations before landfall — relevant context for any "warning lead-time" discussion vs. IMD's operational forecasts.</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- 2. AMPHAN -->
+<!-- ============================================================ -->
+<h2 class="section page-break">2. Super Cyclonic Storm Amphan (2020)</h2>
+<p class="lede">
+  Amphan was the first super cyclonic storm to form in the Bay of Bengal since the 1999 Odisha cyclone, and the
+  first named tropical cyclone of the 2020 North Indian Ocean season. It is the defining "rapid intensification"
+  case in the region — strengthening from a cyclonic storm to a super cyclone in under 36 hours — making it a
+  strong contrast case against Biparjoy's slow, long-duration evolution.
+</p>
+
+<h3 class="subsection">2.1 Key Statistics</h3>
+<table class="stat-table">
+  <thead><tr><th>Field</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Formed</td><td>16 May 2020 (depression, IMD) / low-pressure area noted 13 May</td></tr>
+    <tr><td>Dissipated</td><td>21 May 2020</td></tr>
+    <tr><td>Peak classification (IMD)</td><td>Super Cyclonic Storm</td></tr>
+    <tr><td>Peak classification (JTWC)</td><td>Category 5-equivalent tropical cyclone</td></tr>
+    <tr><td>Highest winds — IMD (3-min sustained)</td><td>240 km/h (150 mph)</td></tr>
+    <tr><td>Highest winds — JTWC (1-min sustained)</td><td>270 km/h (165 mph)</td></tr>
+    <tr><td>Lowest central pressure (IMD)</td><td>920 hPa</td></tr>
+    <tr><td>Lowest central pressure (JTWC)</td><td>901 hPa</td></tr>
+    <tr><td>Landfall location</td><td>Between Digha (West Bengal, India) and Hatiya (near Sundarbans) / India-Bangladesh border region</td></tr>
+    <tr><td>Landfall date/time</td><td>20 May 2020, ≈10:00–11:00 UTC (afternoon IST)</td></tr>
+    <tr><td>Landfall intensity</td><td>Very Severe Cyclonic Storm; sustained ~155–165 km/h, gusts to ~185–200 km/h</td></tr>
+    <tr><td>Basin / Sub-basin</td><td>North Indian Ocean — Bay of Bengal (BOB)</td></tr>
+    <tr><td>Areas affected</td><td>India (West Bengal, Odisha, Andaman Is.), Bangladesh, Sri Lanka, Bhutan, Myanmar, Thailand</td></tr>
+    <tr><td>Fatalities</td><td>133 total</td></tr>
+    <tr><td>Estimated damage</td><td>US$15.5 billion (2020 USD) — 2nd costliest cyclone on record in North Indian Ocean</td></tr>
+    <tr><td>Track length</td><td>~1,820 km total (~1,328 km over ocean, ~492 km over land)</td></tr>
+    <tr><td>People affected</td><td>~18 million; ~3 million houses damaged; ~449,000 electric poles downed</td></tr>
+  </tbody>
+</table>
+
+<h3 class="subsection">2.2 Meteorological Timeline</h3>
+<table class="timeline-table">
+  <thead>
+    <tr><th>Date</th><th>Stage</th><th>Basin position</th><th>Max winds (approx.)</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>13 May 2020</td><td>Low-pressure area</td><td>~300 km east of Colombo, Sri Lanka</td><td>—</td><td>Genesis disturbance over exceptionally warm SST</td></tr>
+    <tr><td>15–16 May 2020</td><td>Tropical Depression → Depression</td><td>~11.4°N, 86.0°E, Bay of Bengal</td><td>&lt;60 km/h</td><td>JTWC upgrade 15 May; IMD follows 16 May</td></tr>
+    <tr><td>17 May 2020</td><td>Severe Cyclonic Storm</td><td>Central Bay of Bengal</td><td>80–120 km/h, gusts 140 km/h</td><td>Rapid intensification begins (within 12 hrs → extremely severe)</td></tr>
+    <tr><td>18 May 2020, ~12:00 UTC</td><td>Peak intensity — Super Cyclonic Storm</td><td>Central Bay of Bengal</td><td>240 km/h (IMD 3-min) / 270 km/h (JTWC 1-min)</td><td>Category 5-equivalent; only super cyclone in region in two decades</td></tr>
+    <tr><td>19 May 2020</td><td>Weakening, still Category 3-equiv.</td><td>Approaching West Bengal/Bangladesh coast</td><td>~185 km/h</td><td>Moving north-northeast over Bay of Bengal</td></tr>
+    <tr><td>20 May 2020, 10–11 UTC</td><td>Landfall</td><td>Between Digha (WB) and Sundarbans/Hatiya</td><td>155–165 km/h, gusts 185–200 km/h</td><td>Landfall as Very Severe Cyclonic Storm; passed close to Kolkata</td></tr>
+    <tr><td>21 May 2020</td><td>Dissipated</td><td>Interior Bangladesh/Northeast India</td><td>—</td><td>Rapid weakening over land</td></tr>
+  </tbody>
+</table>
+<div class="caption">
+  Structural note for pattern-classification labeling: Amphan is the key "rapid intensification / eye" test case —
+  well-defined eye/eyewall structure visible at and near peak intensity (17–19 May), useful for training the
+  'Eye / Eyewall' and 'Banding' classes; the 19–20 May approach-to-landfall segment shows gradual weakening/asymmetry
+  as it interacted with the coastline, transitioning into the 'Landfall-degrading' class.
+</div>
+
+<h3 class="subsection">2.3 Impact Summary</h3>
+<ul class="impact-list">
+  <li>Second-costliest cyclone on record in the North Indian Ocean (India alone reported ~US$13.2 billion in damages in West Bengal).</li>
+  <li>~3 million houses damaged; ~18,000 sq km of agricultural land and mangrove forest affected.</li>
+  <li>Response was significantly complicated by the concurrent COVID-19 pandemic (shelter capacity limits, mobility restrictions, PPE requirements) — relevant context if discussing operational/response gaps rather than pure forecast-accuracy gaps.</li>
+  <li>Widespread storm-surge flooding and destructive winds extended impact across India, Bangladesh, Sri Lanka, Bhutan, Myanmar, and Thailand.</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- 3. COMPARISON -->
+<!-- ============================================================ -->
+<h2 class="section page-break">3. Side-by-Side Comparison</h2>
+<table class="compare-table">
+  <thead><tr><th>Attribute</th><th>Biparjoy (2023)</th><th>Amphan (2020)</th></tr></thead>
+  <tbody>
+    <tr><td>Basin</td><td>Arabian Sea</td><td>Bay of Bengal</td></tr>
+    <tr><td>Duration</td><td>~13 days (long-lived)</td><td>~5–6 days (fast-evolving)</td></tr>
+    <tr><td>Peak IMD category</td><td>Extremely Severe Cyclonic Storm</td><td>Super Cyclonic Storm</td></tr>
+    <tr><td>Peak 3-min wind (IMD)</td><td>165 km/h</td><td>240 km/h</td></tr>
+    <tr><td>Lowest pressure (IMD)</td><td>958 hPa</td><td>920 hPa</td></tr>
+    <tr><td>Intensification pattern</td><td>Gradual, multiple fluctuation cycles</td><td>Rapid intensification (&lt;36 hrs to super cyclone)</td></tr>
+    <tr><td>Landfall state</td><td>Gujarat, India (west coast)</td><td>West Bengal, India (east coast, near Bangladesh)</td></tr>
+    <tr><td>Fatalities</td><td>17</td><td>133</td></tr>
+    <tr><td>Damage (USD)</td><td>~$148 million</td><td>~$15.5 billion</td></tr>
+    <tr><td>Best-track ML use case</td><td>Slow-evolution, long-track / erratic-motion stress test</td><td>Rapid-intensification / peak-eye-structure stress test</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================================ -->
+<!-- 4. NOTES -->
+<!-- ============================================================ -->
+<h2 class="section">4. Notes for Structured-Data / Ground-Truth Work</h2>
+<ul class="notes-list">
+  <li><strong>IBTrACS access:</strong> Pull <code>ibtracs.NI.list.v04r00.csv</code> (North Indian basin subset) from NOAA NCEI. Filter by <code>NAME</code> = BIPARJOY / AMPHAN and <code>SEASON</code> = 2023 / 2020 respectively. Row 2 of the raw file is a units row — skip it when loading with pandas.</li>
+  <li><strong>IMD-specific columns:</strong> Use the <code>NEWDELHI_LAT</code> / <code>NEWDELHI_LON</code> / <code>NEWDELHI_WIND</code> / <code>NEWDELHI_PRES</code> fields for an apples-to-apples "model vs. IMD" comparison, since these are IMD's own reported positions/intensities (RSMC New Delhi is the official reporting agency for this basin) rather than a multi-agency blended value.</li>
+  <li><strong>Timestamps:</strong> Best-track points are generally at 3-hour intervals for RSMC New Delhi reports (6-hourly for many other agencies) — confirm cadence before computing MAE so predicted and ground-truth timestamps are properly aligned/interpolated.</li>
+  <li><strong>Caveat:</strong> All figures in this dossier are compiled from secondary sources (Wikipedia, NASA, news, peer-reviewed post-storm papers) for quick reference and framing. Before final MAE/validation work or slide claims, cross-check exact per-timestamp positions and intensities directly against the downloaded IBTrACS CSV and, where possible, official IMD cyclone e-Atlas / RSMC best-track reports — those are the authoritative sources of record.</li>
+</ul>
+
+<hr class="divider">
+<p class="sources">
+  Sources: Wikipedia — "Cyclone Biparjoy", "Cyclone Amphan"; NASA Earth Observatory (VIIRS/MODIS imagery captions);
+  IMD/JTWC operational bulletins as summarized in contemporary reporting (Al Jazeera, CBS News, Deccan Herald, Gulf News);
+  peer-reviewed post-storm analyses (arXiv:2310.18114, arXiv:2007.02982, arXiv:2012.04384, Springer s41976-021-00048-z).
+  Compiled 28 August 2026.
+</p>
+
+</body>
+</html>
