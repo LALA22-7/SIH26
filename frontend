@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CycloneWatch — PS70</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  
+  :root{
+    --ocean-950:#0A121C;   /* app background */
+    --ocean-900:#101B28;   /* panel background */
+    --ocean-850:#152436;   /* raised panel / hover */
+    --ocean-800:#223347;   /* hairline borders */
+    --signal-ir:#FF7A45;      /* IR channel */
+    --signal-visible:#E7EEF4; /* Visible channel */
+    --signal-wv:#4FC3E0;      /* Water vapor channel */
+    --signal-confidence:#6FE3B4; /* measured / confidence / positive readouts */
+    --signal-alert:#FF5C5C;   /* alerts, high severity */
+    --text-primary:#E7EEF4;
+    --text-muted:#7C8FA3;
+    --text-faint:#4A5A6A;
+    --font-ui:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+    --font-data:'IBM Plex Mono',ui-monospace,SFMono-Regular,monospace;
+    --radius:3px;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;background:var(--ocean-950);color:var(--text-primary);font-family:var(--font-ui);}
+  ::selection{background:var(--signal-ir);color:var(--ocean-950);}
+
+  .app{display:flex;flex-direction:column;height:100vh;}
+
+  
+  .topbar{
+    display:flex;align-items:center;gap:24px;
+    padding:0 20px;height:52px;flex-shrink:0;
+    background:var(--ocean-900);border-bottom:1px solid var(--ocean-800);
+  }
+  .brand{display:flex;align-items:baseline;gap:8px;margin-right:8px;}
+  .brand-mark{width:8px;height:8px;border-radius:50%;background:var(--signal-confidence);
+    box-shadow:0 0 8px var(--signal-confidence);}
+  .brand-name{font-weight:600;font-size:15px;letter-spacing:0.2px;}
+  .brand-tag{font-size:11px;color:var(--text-faint);font-family:var(--font-data);}
+
+  .topbar-field{display:flex;flex-direction:column;gap:1px;}
+  .topbar-field label{font-size:10px;color:var(--text-faint);}
+  .topbar-field select, .topbar-field .value{
+    background:none;border:none;color:var(--text-primary);font-family:var(--font-data);
+    font-size:12.5px;padding:0;
+  }
+  .topbar-field select{cursor:pointer;}
+  .topbar-field select:focus{outline:1px solid var(--signal-wv);}
+
+  .status-pill{
+    margin-left:auto;display:flex;align-items:center;gap:6px;
+    font-family:var(--font-data);font-size:11.5px;color:var(--signal-confidence);
+    border:1px solid var(--ocean-800);padding:5px 10px;border-radius:var(--radius);
+  }
+  .status-dot{width:6px;height:6px;border-radius:50%;background:var(--signal-confidence);}
+
+  
+  .body{flex:1;display:flex;min-height:0;}
+  .sidebar{
+    width:308px;flex-shrink:0;background:var(--ocean-900);
+    border-right:1px solid var(--ocean-800);
+    display:flex;flex-direction:column;overflow-y:auto;
+  }
+  .map-wrap{flex:1;position:relative;min-width:0;}
+  #map{width:100%;height:100%;background:var(--ocean-950);}
+
+  
+  .panel{padding:16px;border-bottom:1px solid var(--ocean-800);}
+  .panel-title{
+    font-size:11px;color:var(--text-muted);margin:0 0 10px 0;
+    padding-bottom:6px;border-bottom:1px solid var(--ocean-800);
+  }
+
+  .l1-status{display:flex;align-items:center;gap:10px;}
+  .l1-dot{width:10px;height:10px;border-radius:50%;background:var(--signal-ir);
+    box-shadow:0 0 10px var(--signal-ir);flex-shrink:0;
+    animation:pulse 2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.45;}}
+  .l1-label{font-size:16px;font-weight:600;}
+  .l1-sub{font-size:11.5px;color:var(--text-muted);margin-top:2px;}
+
+  .l2-row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;
+    border-bottom:1px dashed var(--ocean-800);}
+  .l2-row:last-child{border-bottom:none;}
+  .l2-key{font-size:12px;color:var(--text-muted);}
+  .l2-val{font-family:var(--font-data);font-size:13px;}
+  .l2-val.pattern{color:var(--signal-ir);font-weight:600;}
+  .l2-val.confidence{color:var(--signal-confidence);}
+
+  .conf-bar-track{width:100%;height:4px;background:var(--ocean-800);border-radius:2px;margin-top:8px;overflow:hidden;}
+  .conf-bar-fill{height:100%;background:var(--signal-confidence);}
+
+  .timeline{display:flex;flex-direction:column;gap:0;}
+  .tl-item{display:flex;gap:10px;padding:6px 0;position:relative;}
+  .tl-line{width:1px;background:var(--ocean-800);position:absolute;left:4px;top:14px;bottom:-6px;}
+  .tl-item:last-child .tl-line{display:none;}
+  .tl-dot{width:9px;height:9px;border-radius:50%;margin-top:3px;flex-shrink:0;z-index:1;background:var(--ocean-800);border:1px solid var(--text-faint);}
+  .tl-dot.now{background:var(--signal-confidence);border-color:var(--signal-confidence);box-shadow:0 0 6px var(--signal-confidence);}
+  .tl-dot.future{border-color:var(--signal-ir);}
+  .tl-body .tl-time{font-family:var(--font-data);font-size:11px;color:var(--text-muted);}
+  .tl-body .tl-desc{font-size:12.5px;margin-top:1px;}
+  .tl-body .tl-desc .conf-inline{color:var(--signal-confidence);font-family:var(--font-data);font-size:11px;}
+
+  /* ---------- Map chrome ---------- */
+  .layer-toggles{
+    position:absolute;top:14px;left:14px;z-index:500;
+    display:flex;gap:1px;background:var(--ocean-800);border-radius:var(--radius);overflow:hidden;
+    border:1px solid var(--ocean-800);
+  }
+  .layer-btn{
+    font-family:var(--font-data);font-size:11.5px;letter-spacing:0.3px;
+    padding:8px 14px;background:var(--ocean-900);color:var(--text-muted);
+    border:none;cursor:pointer;position:relative;
+  }
+  .layer-btn.active{background:var(--ocean-850);color:var(--text-primary);}
+  .layer-btn .swatch{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;}
+  .layer-btn[data-layer="ir"] .swatch{background:var(--signal-ir);}
+  .layer-btn[data-layer="visible"] .swatch{background:var(--signal-visible);}
+  .layer-btn[data-layer="wv"] .swatch{background:var(--signal-wv);}
+  .layer-btn:disabled{opacity:0.35;cursor:not-allowed;}
+
+  .map-caption{
+    position:absolute;bottom:14px;left:14px;z-index:500;
+    background:var(--ocean-900);border:1px solid var(--ocean-800);border-radius:var(--radius);
+    padding:8px 12px;font-family:var(--font-data);font-size:11px;color:var(--text-muted);
+    max-width:320px;line-height:1.5;
+  }
+  .map-caption b{color:var(--text-primary);font-weight:500;}
+
+  .legend{
+    position:absolute;top:14px;right:14px;z-index:500;
+    background:var(--ocean-900);border:1px solid var(--ocean-800);border-radius:var(--radius);
+    padding:10px 12px;font-size:11px;color:var(--text-muted);
+  }
+  .legend-row{display:flex;align-items:center;gap:7px;margin-top:5px;}
+  .legend-row:first-child{margin-top:0;}
+  .legend-swatch{width:16px;height:0;border-top:2px solid;}
+  .legend-swatch.observed{border-top-style:solid;border-color:var(--text-primary);}
+  .legend-swatch.predicted{border-top-style:dashed;border-color:var(--signal-ir);}
+  .legend-dot{width:9px;height:9px;border-radius:50%;border:1px solid var(--signal-ir);background:rgba(255,122,69,0.15);}
+
+  
+  .replay-bar{
+    flex-shrink:0;background:var(--ocean-900);border-top:1px solid var(--ocean-800);
+    padding:10px 20px 14px 20px;
+  }
+  .replay-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .replay-title{font-size:11px;color:var(--text-muted);}
+  .replay-readout{font-family:var(--font-data);font-size:12px;color:var(--signal-confidence);}
+  .replay-track{position:relative;height:28px;}
+  .replay-line{position:absolute;top:13px;left:0;right:0;height:1px;background:var(--ocean-800);}
+  .replay-steps{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;}
+  .replay-step{display:flex;flex-direction:column;align-items:center;cursor:pointer;flex:1;}
+  .replay-step .dot{width:9px;height:9px;border-radius:50%;background:var(--ocean-800);border:1px solid var(--text-faint);margin-top:9px;}
+  .replay-step .lbl{font-family:var(--font-data);font-size:10px;color:var(--text-faint);margin-top:5px;}
+  .replay-step.active .dot{background:var(--signal-ir);border-color:var(--signal-ir);box-shadow:0 0 6px var(--signal-ir);}
+  .replay-step.active .lbl{color:var(--text-primary);}
+  .replay-step:hover .dot{border-color:var(--signal-wv);}
+
+  
+  .evidence-drawer{
+    position:fixed;top:0;right:-380px;width:360px;height:100%;
+    background:var(--ocean-900);border-left:1px solid var(--ocean-800);
+    z-index:1000;transition:right 0.25s ease;padding:18px;overflow-y:auto;
+  }
+  .evidence-drawer.open{right:0;}
+  .evidence-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-muted);
+    font-size:18px;cursor:pointer;line-height:1;}
+  .evidence-title{font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--ocean-800);padding-bottom:8px;margin-bottom:12px;}
+  .evidence-img{width:100%;height:160px;border-radius:var(--radius);border:1px solid var(--ocean-800);
+    background:radial-gradient(circle at 45% 40%, var(--signal-ir), transparent 60%), var(--ocean-950);
+    margin-bottom:12px;}
+
+  .pulse-marker{width:16px;height:16px;position:relative;}
+  .pulse-marker .core{width:8px;height:8px;border-radius:50%;background:var(--signal-ir);
+    position:absolute;top:4px;left:4px;box-shadow:0 0 8px var(--signal-ir);}
+  .pulse-marker .ring{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--signal-ir);
+    position:absolute;top:0;left:0;animation:ringpulse 2s ease-out infinite;}
+  @keyframes ringpulse{0%{transform:scale(0.4);opacity:0.9;}100%{transform:scale(2.2);opacity:0;}}
+
+  .leaflet-container{font-family:var(--font-data);}
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--ocean-800);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  
+  <div class="topbar">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <span class="brand-name">CycloneWatch</span>
+      <span class="brand-tag">PS70</span>
+    </div>
+
+    <div class="topbar-field">
+      <label>Event</label>
+      <select id="eventSelect">
+        <option value="biparjoy">Biparjoy · 2023 · Arabian Sea</option>
+        <option value="amphan">Amphan · 2020 · Bay of Bengal</option>
+      </select>
+    </div>
+
+    <div class="topbar-field">
+      <label>Analysis time (UTC)</label>
+      <span class="value" id="timeReadout">2023-06-14T12:00:00Z</span>
+    </div>
+
+    <div class="topbar-field">
+      <label>Model</label>
+      <span class="value" id="modelReadout">ps70-classifier v0.1.0</span>
+    </div>
+
+    <div class="status-pill"><span class="status-dot"></span> Demo data · offline-safe</div>
+  </div>
+
+  
+  <div class="body">
+
+    
+    <div class="sidebar">
+
+      <div class="panel">
+        <div class="panel-title">Level 1 — status</div>
+        <div class="l1-status">
+          <span class="l1-dot"></span>
+          <div>
+            <div class="l1-label">Cyclone detected</div>
+            <div class="l1-sub">Extremely Severe Cyclonic Storm · Arabian Sea</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Level 2 — classification</div>
+        <div class="l2-row"><span class="l2-key">Pattern</span><span class="l2-val pattern" id="patternVal">Curved Band</span></div>
+        <div class="l2-row"><span class="l2-key">Confidence</span><span class="l2-val confidence" id="confVal">72%</span></div>
+        <div class="conf-bar-track"><div class="conf-bar-fill" id="confBar" style="width:72%"></div></div>
+        <div class="l2-row" style="margin-top:6px;"><span class="l2-key">Centre</span><span class="l2-val" id="centreVal">15.20°N, 68.40°E</span></div>
+        <div class="l2-row"><span class="l2-key">Source</span><span class="l2-val">INSAT · IR</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Predicted evolution</div>
+        <div class="timeline" id="timeline"></div>
+      </div>
+
+      <div class="panel" style="border-bottom:none;">
+        <div class="panel-title">Uncertainty</div>
+        <div class="l2-row"><span class="l2-key">Status</span><span class="l2-val" style="color:var(--text-muted);">provisional</span></div>
+        <div class="l2-row"><span class="l2-key">Region</span><span class="l2-val">~85 km radius</span></div>
+      </div>
+
+    </div>
+
+    
+    <div class="map-wrap">
+      <div id="map"></div>
+
+      <div class="layer-toggles" id="layerToggles">
+        <button class="layer-btn active" data-layer="ir"><span class="swatch"></span>IR</button>
+        <button class="layer-btn" data-layer="visible"><span class="swatch"></span>Visible</button>
+        <button class="layer-btn" data-layer="wv"><span class="swatch"></span>Water vapor</button>
+      </div>
+
+      <div class="legend">
+        <div class="legend-row"><span class="legend-dot"></span> Cyclone centre</div>
+        <div class="legend-row"><span class="legend-swatch observed"></span> Observed track</div>
+        <div class="legend-row"><span class="legend-swatch predicted"></span> Predicted track</div>
+      </div>
+
+      <div class="map-caption">
+        <b>Placeholder tiles.</b> Base map stands in for the Data team's normalized IR/Visible/WV frame endpoint. Swap the overlay source in <code>renderChannel()</code> once <code>GET /api/ps70/frames/{frame_id}</code> is live — do not change this caption's honesty once real imagery lands.
+      </div>
+    </div>
+
+  </div>
+
+  
+  <div class="replay-bar">
+    <div class="replay-head">
+      <span class="replay-title">Historical replay — T-48h → T0</span>
+      <span class="replay-readout" id="replayReadout">T0 · 2023-06-14T12:00:00Z</span>
+    </div>
+    <div class="replay-track">
+      <div class="replay-line"></div>
+      <div class="replay-steps" id="replaySteps"></div>
+    </div>
+  </div>
+
+</div>
+
+
+<div class="evidence-drawer" id="evidenceDrawer">
+  <button class="evidence-close" id="evidenceClose">&times;</button>
+  <div class="evidence-title">Level 3 — evidence</div>
+  <div class="evidence-img"></div>
+  <div class="l2-row"><span class="l2-key">Source</span><span class="l2-val" id="ev-source">INSAT-3D</span></div>
+  <div class="l2-row"><span class="l2-key">Channel</span><span class="l2-val" id="ev-channel">IR</span></div>
+  <div class="l2-row"><span class="l2-key">Timestamp</span><span class="l2-val" id="ev-time">2023-06-14T12:00:00Z</span></div>
+  <div class="l2-row"><span class="l2-key">Frame ID</span><span class="l2-val" id="ev-frame">frame_014</span></div>
+  <div class="l2-row"><span class="l2-key">Centre estimate</span><span class="l2-val" id="ev-centre">15.20°N, 68.40°E</span></div>
+  <div class="l2-row"><span class="l2-key">Pattern</span><span class="l2-val" id="ev-pattern">Curved Band (72%)</span></div>
+  <div class="l2-row"><span class="l2-key">Model version</span><span class="l2-val" id="ev-model">ps70-classifier v0.1.0</span></div>
+</div>
+
+<script>
+
+
+const EVENTS = {
+  biparjoy: {
+    name: "Biparjoy",
+    center: [21.5, 65.5],
+    zoom: 5,
+    classify: {
+      event_id: "biparjoy_2023",
+      timestamp: "2023-06-14T12:00:00Z",
+      center: { lat: 15.20, lon: 68.40 },
+      pattern: { label: "curved_band", confidence: 0.72 },
+      model: { name: "ps70-classifier-stub", version: "0.1.0" }
+    },
+    predict: {
+      base_time: "2023-06-14T00:00:00Z",
+      predictions: [
+        { valid_time: "2023-06-14T12:00:00Z", center: { lat: 16.10, lon: 67.80 }, pattern: { label: "eye", confidence: 0.64 } },
+        { valid_time: "2023-06-15T00:00:00Z", center: { lat: 17.20, lon: 67.10 }, pattern: { label: "eye", confidence: 0.59 } }
+      ],
+      uncertainty: { status: "provisional" }
+    },
+    replaySteps: [
+      { label: "T-48h", time: "2023-06-12T12:00:00Z" },
+      { label: "T-36h", time: "2023-06-13T00:00:00Z" },
+      { label: "T-24h", time: "2023-06-13T12:00:00Z" },
+      { label: "T-12h", time: "2023-06-14T00:00:00Z" },
+      { label: "T0",    time: "2023-06-14T12:00:00Z" }
+    ],
+    observedTrack: [[19.9,70.2],[20.6,69.5],[21.1,68.9],[15.20,68.40]].reverse()
+  },
+  amphan: {
+    name: "Amphan",
+    center: [16.5, 88.0],
+    zoom: 5,
+    classify: {
+      event_id: "amphan_2020",
+      timestamp: "2020-05-18T12:00:00Z",
+      center: { lat: 15.90, lon: 87.60 },
+      pattern: { label: "eye", confidence: 0.88 },
+      model: { name: "ps70-classifier-stub", version: "0.1.0" }
+    },
+    predict: {
+      base_time: "2020-05-18T00:00:00Z",
+      predictions: [
+        { valid_time: "2020-05-19T00:00:00Z", center: { lat: 18.30, lon: 87.10 }, pattern: { label: "eye", confidence: 0.77 } },
+        { valid_time: "2020-05-20T00:00:00Z", center: { lat: 21.60, lon: 88.10 }, pattern: { label: "landfall_degrading", confidence: 0.61 } }
+      ],
+      uncertainty: { status: "provisional" }
+    },
+    replaySteps: [
+      { label: "T-48h", time: "2020-05-16T12:00:00Z" },
+      { label: "T-36h", time: "2020-05-17T00:00:00Z" },
+      { label: "T-24h", time: "2020-05-17T12:00:00Z" },
+      { label: "T-12h", time: "2020-05-18T00:00:00Z" },
+      { label: "T0",    time: "2020-05-18T12:00:00Z" }
+    ],
+    observedTrack: [[13.9,87.2],[14.8,87.4],[15.90,87.60]].reverse()
+  }
+};
+
+const PATTERN_LABELS = {
+  eye: "Eye", banding: "Banding", curved_band: "Curved Band",
+  shear_affected: "Shear-affected", disorganized: "Disorganized",
+  landfall_degrading: "Landfall-degrading"
+};
+
+let currentEventId = "biparjoy";
+let currentChannel = "ir";
+let map, centreMarker, observedLine, predictedLine, uncertaintyCircle;
+
+
+function initMap(){
+  map = L.map('map', { zoomControl:true, attributionControl:false }).setView(EVENTS[currentEventId].center, EVENTS[currentEventId].zoom);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    subdomains:'abcd', maxZoom:9
+  }).addTo(map);
+  L.control.attribution({prefix:false}).addTo(map);
+}
+
+function channelColor(ch){
+  return ch === 'ir' ? '#FF7A45' : ch === 'wv' ? '#4FC3E0' : '#E7EEF4';
+}
+
+
+let channelOverlay = null;
+function renderChannel(ch){
+  currentChannel = ch;
+  document.querySelectorAll('.layer-btn').forEach(b=>b.classList.toggle('active', b.dataset.layer===ch));
+  if(channelOverlay) map.removeLayer(channelOverlay);
+  const ev = EVENTS[currentEventId];
+  const c = ev.classify.center;
+  channelOverlay = L.circle([c.lat, c.lon], {
+    radius: 260000, color: channelColor(ch), weight:0, fillColor: channelColor(ch), fillOpacity:0.16
+  }).addTo(map);
+}
+
+function renderClassification(){
+  const ev = EVENTS[currentEventId];
+  const c = ev.classify;
+  document.getElementById('patternVal').textContent = PATTERN_LABELS[c.pattern.label] || c.pattern.label;
+  document.getElementById('confVal').textContent = Math.round(c.pattern.confidence*100)+'%';
+  document.getElementById('confBar').style.width = Math.round(c.pattern.confidence*100)+'%';
+  document.getElementById('centreVal').textContent = `${c.center.lat.toFixed(2)}°N, ${c.center.lon.toFixed(2)}°E`;
+  document.getElementById('timeReadout').textContent = c.timestamp;
+  document.getElementById('modelReadout').textContent = `${c.model.name} ${c.model.version}`;
+
+  if(centreMarker) map.removeLayer(centreMarker);
+  const icon = L.divIcon({ className:'', html:'<div class="pulse-marker"><div class="ring"></div><div class="core"></div></div>', iconSize:[16,16] });
+  centreMarker = L.marker([c.center.lat, c.center.lon], { icon }).addTo(map);
+  centreMarker.on('click', ()=> openEvidence(ev));
+
+  if(observedLine) map.removeLayer(observedLine);
+  observedLine = L.polyline(ev.observedTrack, { color:'#E7EEF4', weight:2, opacity:0.85 }).addTo(map);
+}
+
+function renderPrediction(){
+  const ev = EVENTS[currentEventId];
+  const pts = [[ev.classify.center.lat, ev.classify.center.lon], ...ev.predict.predictions.map(p=>[p.center.lat, p.center.lon])];
+  if(predictedLine) map.removeLayer(predictedLine);
+  predictedLine = L.polyline(pts, { color:'#FF7A45', weight:2, dashArray:'5,6' }).addTo(map);
+
+  if(uncertaintyCircle) map.removeLayer(uncertaintyCircle);
+  const last = ev.predict.predictions[ev.predict.predictions.length-1].center;
+  uncertaintyCircle = L.circle([last.lat, last.lon], {
+    radius: 90000, color:'#FF7A45', weight:1, dashArray:'2,4', fillColor:'#FF7A45', fillOpacity:0.06
+  }).addTo(map);
+
+  // timeline panel
+  const tl = document.getElementById('timeline');
+  tl.innerHTML = '';
+  const rows = [
+    { time: ev.classify.timestamp, label: `Observed — ${PATTERN_LABELS[ev.classify.pattern.label]}`, conf: ev.classify.pattern.confidence, cls:'now' },
+    ...ev.predict.predictions.map(p => ({ time:p.valid_time, label:`Predicted — ${PATTERN_LABELS[p.pattern.label]||p.pattern.label}`, conf:p.pattern.confidence, cls:'future' }))
+  ];
+  rows.forEach(r=>{
+    const item = document.createElement('div');
+    item.className = 'tl-item';
+    item.innerHTML = `<div class="tl-line"></div><div class="tl-dot ${r.cls}"></div>
+      <div class="tl-body"><div class="tl-time">${r.time}</div>
+      <div class="tl-desc">${r.label} <span class="conf-inline">${Math.round(r.conf*100)}%</span></div></div>`;
+    tl.appendChild(item);
+  });
+}
+
+function renderReplayBar(){
+  const ev = EVENTS[currentEventId];
+  const wrap = document.getElementById('replaySteps');
+  wrap.innerHTML = '';
+  ev.replaySteps.forEach((s, i)=>{
+    const el = document.createElement('div');
+    el.className = 'replay-step' + (i===ev.replaySteps.length-1 ? ' active':'');
+    el.innerHTML = `<div class="dot"></div><div class="lbl">${s.label}</div>`;
+    el.addEventListener('click', ()=>{
+      document.querySelectorAll('.replay-step').forEach(x=>x.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('replayReadout').textContent = `${s.label} · ${s.time}`;
+    });
+    wrap.appendChild(el);
+  });
+  document.getElementById('replayReadout').textContent = `${ev.replaySteps[ev.replaySteps.length-1].label} · ${ev.replaySteps[ev.replaySteps.length-1].time}`;
+}
+
+function openEvidence(ev){
+  document.getElementById('ev-source').textContent = 'INSAT-3D (placeholder)';
+  document.getElementById('ev-channel').textContent = currentChannel.toUpperCase();
+  document.getElementById('ev-time').textContent = ev.classify.timestamp;
+  document.getElementById('ev-frame').textContent = ev.classify.event_id + '_frame';
+  document.getElementById('ev-centre').textContent = `${ev.classify.center.lat.toFixed(2)}°N, ${ev.classify.center.lon.toFixed(2)}°E`;
+  document.getElementById('ev-pattern').textContent = `${PATTERN_LABELS[ev.classify.pattern.label]} (${Math.round(ev.classify.pattern.confidence*100)}%)`;
+  document.getElementById('ev-model').textContent = `${ev.classify.model.name} ${ev.classify.model.version}`;
+  document.getElementById('evidenceDrawer').classList.add('open');
+}
+
+function loadEvent(id){
+  currentEventId = id;
+  const ev = EVENTS[id];
+  map.setView(ev.center, ev.zoom);
+  renderChannel(currentChannel);
+  renderClassification();
+  renderPrediction();
+  renderReplayBar();
+}
+
+
+initMap();
+loadEvent(currentEventId);
+
+document.getElementById('layerToggles').addEventListener('click', e=>{
+  const btn = e.target.closest('.layer-btn');
+  if(btn) renderChannel(btn.dataset.layer);
+});
+document.getElementById('eventSelect').addEventListener('change', e=> loadEvent(e.target.value));
+document.getElementById('evidenceClose').addEventListener('click', ()=> document.getElementById('evidenceDrawer').classList.remove('open'));
+</script>
+</body>
+</html>
