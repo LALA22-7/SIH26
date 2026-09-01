@@ -4,9 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Cyclone Ops Console — Shell</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Leaflet CSS — local copy, no CDN required -->
+<link rel="stylesheet" href="vendor/leaflet.min.css" />
+<!-- Fonts — offline-safe system font stack, no Google Fonts CDN -->
+<link rel="stylesheet" href="vendor/fonts.css" />
 <style>
   :root{
     --abyss: #0A0F1A;
@@ -152,8 +153,15 @@
   <div class="footerText right" id="zoomHint">Zoom 5</div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="vendor/leaflet.min.js"></script>
 <script>
+  /*
+   * Map tile layer — uses CartoDB dark tiles when online.
+   * For a fully offline demo, replace this with a local tile server
+   * (e.g. TileServer-GL serving an MBTiles file of the Indian Ocean region).
+   * The rest of the console (channel toggles, clock, storm selector) works
+   * without any tile layer.
+   */
   const STORMS = {
     biparjoy: { center:[22.9, 70.5], zoom:6, basin:'Arabian Sea · RSMC New Delhi' },
     amphan:   { center:[21.6, 88.3], zoom:6, basin:'Bay of Bengal · RSMC New Delhi' }

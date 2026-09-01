@@ -1,0 +1,19 @@
+/*
+ * Offline-safe font stack for CycloneWatch console shell.
+ *
+ * Primary: system fonts that are always available offline.
+ * The UI was designed with IBM Plex Mono and Inter — if those are installed
+ * on the demo machine they will be picked up automatically by the OS.
+ * On machines without them, the system monospace / sans-serif fallbacks
+ * produce an identical layout.
+ *
+ * No network calls. No Google Fonts CDN dependency.
+ */
+
+:root {
+  /* Monospace: IBM Plex Mono → Cascadia Code → Consolas → system mono */
+  --mono: 'IBM Plex Mono', 'Cascadia Code', Consolas, 'Courier New', monospace;
+
+  /* Sans-serif: Inter → Segoe UI → system sans */
+  --sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}

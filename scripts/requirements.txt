@@ -1,0 +1,19 @@
+# Data pipeline dependencies for scripts/ (root level)
+# Install with:  pip install -r scripts/requirements.txt
+#
+# These are separate from backend/pyproject.toml which covers the FastAPI API only.
+# Run these scripts locally or inside a dedicated data-pipeline environment —
+# NOT inside the backend Docker container.
+
+# AWS S3 download (aws_downloader.py)
+boto3==1.34.144
+botocore==1.34.144
+
+# Satellite data handling (standardize_data.py)
+xarray==2024.6.0
+netCDF4==1.7.1
+rasterio==1.3.10
+numpy==1.26.4
+
+# Ground-truth and manifest processing (split_ibtracs.py, validate_and_join.py, update_metadata.py)
+pandas==2.2.2
