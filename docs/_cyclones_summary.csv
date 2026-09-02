@@ -1,0 +1,6 @@
+storm_name,season,basin,category,period,peak_wind,min_pressure,track_length,landfall
+FANI,2019,Bay of Bengal,Extremely Severe Cyclonic Storm (ESCS),26 April – 4 May 2019,115 kt (~213 km/h) estimated peak; IMD operational reports commonly expressed the peak range as 200–210 km/h class,932 hPa,3030 km,"Near Puri, Odisha, India; landfall process began around 0800 IST on 3 May"
+VAYU,2019,Arabian Sea,Very Severe Cyclonic Storm (VSCS),10 – 17 June 2019,"80 kt (~148 km/h), gusting to 165 km/h",970 hPa,1862 km,No landfall; skirted the south Gujarat coast and later weakened over the sea
+TAUKTAE,2021,Arabian Sea,Extremely Severe Cyclonic Storm (ESCS),14 – 19 May 2021,"100 kt (~185 km/h), gusting to 210 km/h",950 hPa,1880 km,"Saurashtra coast, Gujarat, near the Gujarat coast on 17 May 2021"
+YAAS,2021,Bay of Bengal,Very Severe Cyclonic Storm (VSCS),23 – 28 May 2021,75–85 kt (~140–157 km/h),About 970 hPa class in the IMD best-track/reporting record,About 703 km,"North Odisha coast, near Balasore, India, on 26 May 2021"
+MOCHA,2023,Bay of Bengal,Extremely Severe Cyclonic Storm (ESCS),9 – 15 May 2023,110 kt (~204 km/h),About 938 hPa class during peak intensity in operational best-track reporting,Approx. 2000 km class,"Between Kyaukpyu, Myanmar and Cox's Bazar/Bangladesh region on 14 May 2023"

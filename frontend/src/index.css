@@ -1,0 +1,139 @@
+/* IBM Plex fonts — local vendor copies used as fallback; Google Fonts for dev */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+@layer base {
+  html, body {
+    @apply bg-ocean-950 text-text-primary overflow-hidden;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(
+      circle at 50% -10%,
+      rgba(22, 42, 68, 0.55) 0%,
+      rgba(10, 18, 28, 1) 75%
+    );
+    background-attachment: fixed;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar        { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track  { background: transparent; }
+  ::-webkit-scrollbar-thumb  { @apply bg-ocean-800 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-ocean-750; }
+
+  /* Leaflet container font override */
+  .leaflet-container { font-family: 'IBM Plex Mono', monospace !important; }
+}
+
+/* ── Glass utilities ──────────────────────────────────────────────────────── */
+@layer utilities {
+  /* Primary panel glass — semi-transparent with strong blur */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  }
+
+  /* Lighter surface glass for cards */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.20),
+                inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  }
+
+  /* Floating chrome (map controls, popovers) */
+  .glass-chrome {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.30),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  /* Pill / chip variant */
+  .glass-pill {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px) saturate(130%);
+    -webkit-backdrop-filter: blur(16px) saturate(130%);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* Data value typography — large number display */
+  .metric-value {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 2.75rem;
+    font-weight: 300;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+  }
+  .metric-value-sm {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .metric-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #7C8FA3;
+  }
+  .metric-unit {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: #7C8FA3;
+    margin-left: 4px;
+    align-self: flex-end;
+    margin-bottom: 2px;
+  }
+
+  /* Text shadow for map overlays */
+  .text-shadow-sm  { text-shadow: 0 1px 2px rgba(0,0,0,0.7); }
+  .text-shadow-md  { text-shadow: 0 2px 6px rgba(0,0,0,0.8); }
+
+  /* Custom range input — for timeline slider */
+  .range-track {
+    @apply w-full h-[2px] rounded-full bg-ocean-800 appearance-none cursor-pointer;
+  }
+  .range-track::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 0 8px rgba(255,255,255,0.6);
+    cursor: pointer;
+  }
+  .range-track::-moz-range-thumb {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: white;
+    border: none;
+    box-shadow: 0 0 8px rgba(255,255,255,0.6);
+    cursor: pointer;
+  }
+}
+
+/* ── Animations ────────────────────────────────────────────────────────────── */
+@keyframes spin-slow  { from { transform: rotate(0deg);   } to { transform: rotate(360deg);  } }
+@keyframes pulse-ring { 0%   { transform: scale(0.4); opacity: 0.9; }
+                        100% { transform: scale(2.4); opacity: 0;   } }
+@keyframes blink      { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.animate-spin-slow  { animation: spin-slow  12s linear infinite; }
+.animate-pulse-ring { animation: pulse-ring  2s ease-out infinite; }
+.animate-blink      { animation: blink       2.2s ease-in-out infinite; }
