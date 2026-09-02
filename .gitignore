@@ -71,9 +71,14 @@ dist/
 # ── Data — raw downloads (large, not for version control) ──
 data/raw/
 data/demo/
-# Normalized frames are tracked — 122 frames, 17 MB total, needed for training.
-# If the dataset grows large (>100 MB), move to Git LFS.
-# data/normalized/   ← intentionally NOT ignored
+# Normalized frames: the original 2-event dataset (biparjoy_2023, amphan_2020)
+# is tracked (17 MB). The extended 5-event dataset is reproduced by running
+# the data pipeline scripts. Track only if repo size allows.
+data/normalized/fani_2019/
+data/normalized/tauktae_2021/
+data/normalized/phailin_2013/
+data/normalized/hudhud_2014/
+data/normalized/ockhi_2017/
 
 # ── ML model checkpoints ──────────────────────────────
 # The trained checkpoint is tracked (4 MB). Large future checkpoints should
