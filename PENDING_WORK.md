@@ -503,6 +503,18 @@ Load fixtures when API is unreachable (check `GET /health` first).
 
 ---
 
+## Hosting & Deployment Strategy (Planned)
+
+> **Note:** Deployment will be executed *after* core dev is done.
+
+- **Frontend**: Hosted on **Vercel** (zero-config Vite deployment).
+- **Backend & ML**: Hosted together as a single Dockerized web service on **Render**.
+  - A root-level `Dockerfile` will be created to include both `backend/` and `ml/` directories.
+  - To respect Render's memory/disk limits, the Docker image will specifically install the **CPU-only version of PyTorch**.
+  - The SQLite database and `.npz` files will be bundled statically for the demo.
+
+---
+
 ## Ockhi 2017 — Why It Matters for the Demo
 
 This is the strongest positioning case against IMD:
