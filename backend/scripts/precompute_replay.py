@@ -34,8 +34,12 @@ import sys
 import uuid
 from datetime import datetime, timezone
 
-# Ensure project root is on sys.path when run as a script
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Ensure backend and project root are on sys.path
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+project_root = os.path.dirname(backend_dir)
+sys.path.insert(0, backend_dir)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
@@ -47,8 +51,10 @@ logger = logging.getLogger(__name__)
 def _get_sync_engine():
     url = os.environ.get(
         "DATABASE_SYNC_URL",
-        "postgresql+psycopg2://cyclone:cyclone_secret@localhost:5432/cyclonewatch",
+        "sqlite:///cyclonewatch.db",
     )
+    if "postgresql" not in url:
+        url = "sqlite:///" + os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cyclonewatch.db")
     return create_engine(url, echo=False)
 
 
@@ -59,8 +65,9 @@ def _load_best_track(event_id: str) -> dict:
     """
     import csv
     from pathlib import Path
-
-    data_root = os.environ.get("DATA_ROOT", "/data")
+    import os
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    data_root = os.environ.get("DATA_ROOT", os.path.join(project_root, "data"))
     path = Path(data_root) / "ground_truth" / f"{event_id}_best_track.csv"
 
     if not path.exists():
@@ -92,7 +99,11 @@ def _find_closest_actual(
 
     best = None
     best_delta = None
+    if valid_time.tzinfo is None:
+        valid_time = valid_time.replace(tzinfo=timezone.utc)
     for ts, pos in best_track.items():
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
         delta = abs((ts - valid_time).total_seconds())
         if delta <= tolerance_hours * 3600:
             if best_delta is None or delta < best_delta:
@@ -164,7 +175,7 @@ def precompute(event_id: str) -> None:
                 lat=center["lat"],
                 lon=center["lon"],
                 pattern=pattern["label"],
-                confidence=pattern["confidence"],
+                confidence=pattern.get("confidence") or 0.0,
                 model_name=model["name"],
                 model_version=model["version"],
                 geometry=f"SRID=4326;POINT({center['lon']} {center['lat']})",
@@ -200,7 +211,7 @@ def precompute(event_id: str) -> None:
                     pred_lat=pred["center"]["lat"],
                     pred_lon=pred["center"]["lon"],
                     pattern_label=pred["pattern"]["label"],
-                    pattern_confidence=pred["pattern"]["confidence"],
+                    pattern_confidence=pred["pattern"].get("confidence") or 0.0,
                     model_name=pred_model["name"],
                     model_version=pred_model["version"],
                     uncertainty_status=pred["uncertainty_status"],

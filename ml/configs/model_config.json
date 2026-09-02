@@ -1,9 +1,9 @@
 {
-  "_comment": "Model configuration for CycloneWatch PS70 classifier. Update when retraining.",
+  "_comment": "Model configuration for CycloneWatch PS70 classifier. Updated after Antigravity training run.",
 
   "model": {
     "name": "ps70-classifier",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "architecture": "CycloneCNN",
     "checkpoint": "ml/checkpoints/model.pt"
   },
@@ -12,26 +12,54 @@
     "in_channels": 2,
     "channel_order": ["ir", "water_vapor"],
     "shape": "[C, H, W]",
-    "note": "H and W are variable — AdaptiveAvgPool2d handles any spatial size"
+    "note": "H and W are variable — AdaptiveAvgPool2d(16x16) handles any spatial size"
   },
 
   "training": {
-    "predict_pattern": false,
+    "predict_pattern": true,
     "predict_confidence": false,
     "num_classes": 5,
-    "epochs": 20,
-    "batch_size": 4,
+    "batch_size": 8,
     "learning_rate": 0.001,
     "optimizer": "Adam",
+    "lr_scheduler": "ReduceLROnPlateau(patience=10, factor=0.5)",
     "center_loss": "MSELoss",
-    "center_loss_weight": 1.0,
+    "center_loss_weight": 10.0,
+    "pattern_loss": "CrossEntropyLoss(weighted)",
+    "pattern_loss_weight": 1.0,
+    "class_weights": "inverse_frequency",
     "val_fraction": 0.15,
     "split_seed": 42
   },
 
+  "training_data": {
+    "events": [
+      "biparjoy_2023", "amphan_2020",
+      "fani_2019", "tauktae_2021",
+      "phailin_2013", "hudhud_2014", "ockhi_2017"
+    ],
+    "total_frames": 423,
+    "label_source": "ibtracs_intensity_rules",
+    "manifest": "data/training_manifest.csv"
+  },
+
+  "evaluation": {
+    "val_samples": 60,
+    "center_mae_km": 255.5,
+    "center_median_km": 239.7,
+    "pattern_accuracy": 0.783,
+    "pattern_f1": {
+      "eye": 1.0,
+      "banding": 0.791,
+      "curved_band": 0.545,
+      "shear_affected": 0.8,
+      "disorganized": 0.878
+    }
+  },
+
   "outputs": {
-    "center": "lat/lon regression — TRAINED",
-    "pattern": "5-class classification — NOT YET TRAINED (predict_pattern=false)",
+    "center": "lat/lon regression — TRAINED (MSE, weighted)",
+    "pattern": "5-class classification — TRAINED (CrossEntropy, class-weighted)",
     "confidence": "scalar — NOT YET TRAINED (predict_confidence=false)"
   },
 
@@ -45,21 +73,14 @@
 
   "normalization": {
     "method": "per_frame_min_max",
-    "note": "Applied by standardize_data.py. Do NOT re-normalize inside the model or dataset."
-  },
-
-  "training_data": {
-    "events": ["biparjoy_2023", "amphan_2020"],
-    "total_frames": 122,
-    "pattern_labels": "unlabeled — pattern head training blocked until Research delivers labels",
-    "manifest": "data/training_manifest.csv"
+    "note": "Applied by standardize_data.py. Do NOT re-normalize inside the model."
   },
 
   "status": {
     "centre_prediction": "trained",
-    "pattern_classification": "pending — blocked on Research label CSV",
-    "confidence_calibration": "pending — Day 6",
-    "temporal_model": "pending — persistence fallback active in inference.py",
+    "pattern_classification": "trained (78.3% accuracy on 60 val samples)",
+    "confidence_calibration": "pending",
+    "temporal_model": "persistence fallback — replace with real model",
     "freeze_date": null
   }
 }

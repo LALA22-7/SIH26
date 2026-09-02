@@ -42,6 +42,11 @@ os.makedirs(NORMALIZED_DIR, exist_ok=True)
 BBOXES = {
     "biparjoy_2023": {"lat": slice(5.0, 25.0), "lon": slice(50.0, 75.0)},
     "amphan_2020": {"lat": slice(5.0, 25.0), "lon": slice(80.0, 95.0)},
+    "fani_2019": {"lat": slice(5.0, 25.0), "lon": slice(80.0, 95.0)},
+    "tauktae_2021": {"lat": slice(5.0, 25.0), "lon": slice(50.0, 75.0)},
+    "phailin_2013": {"lat": slice(5.0, 25.0), "lon": slice(80.0, 95.0)},
+    "hudhud_2014": {"lat": slice(5.0, 25.0), "lon": slice(80.0, 95.0)},
+    "ockhi_2017": {"lat": slice(5.0, 25.0), "lon": slice(50.0, 75.0)},
 }
 
 # GridSat-B1 variable names for the channels we need

@@ -42,7 +42,7 @@ MANIFEST_PATH = os.path.join(RAW_DIR, "download_manifest.csv")
 
 BUCKET_NAME = "noaa-cdr-gridsat-b1-pds"
 
-s3 = boto3.client("s3", region_name="us-east-1", config=Config(signature_version=UNSIGNED))
+s3 = boto3.client("s3", region_name="us-east-1", config=Config(signature_version=UNSIGNED, read_timeout=15, connect_timeout=15, retries={"max_attempts": 3}))
 
 # Event windows — inclusive start/end, 3-hourly cadence (matches GridSat-B1 native cadence
 # and RSMC New Delhi best-track reporting interval per the cyclone dossier).
@@ -51,6 +51,22 @@ EVENTS = [
      "end": datetime(2023, 6, 16, 0, tzinfo=timezone.utc)},
     {"id": "amphan_2020", "start": datetime(2020, 5, 16, 0, tzinfo=timezone.utc),
      "end": datetime(2020, 5, 21, 0, tzinfo=timezone.utc)},
+    # ── Additional events for improved model accuracy ─────────────────────
+    # Fani 2019: strongest BoB cyclone in 20 years, well-documented IMD case
+    {"id": "fani_2019", "start": datetime(2019, 4, 25, 0, tzinfo=timezone.utc),
+     "end": datetime(2019, 5, 4, 0, tzinfo=timezone.utc)},
+    # Tauktae 2021: recent Arabian Sea storm, Gujarat landfall like Biparjoy
+    {"id": "tauktae_2021", "start": datetime(2021, 5, 13, 0, tzinfo=timezone.utc),
+     "end": datetime(2021, 5, 19, 0, tzinfo=timezone.utc)},
+    # Phailin 2013: 115 kts BoB, landmark IMD forecast improvement case
+    {"id": "phailin_2013", "start": datetime(2013, 10, 7, 0, tzinfo=timezone.utc),
+     "end": datetime(2013, 10, 14, 0, tzinfo=timezone.utc)},
+    # Hudhud 2014: 100 kts, Andhra landfall, detailed post-storm analysis
+    {"id": "hudhud_2014", "start": datetime(2014, 10, 6, 0, tzinfo=timezone.utc),
+     "end": datetime(2014, 10, 14, 0, tzinfo=timezone.utc)},
+    # Ockhi 2017: IMD missed early intensification — perfect demo contrast case
+    {"id": "ockhi_2017", "start": datetime(2017, 11, 28, 0, tzinfo=timezone.utc),
+     "end": datetime(2017, 12, 5, 0, tzinfo=timezone.utc)},
 ]
 
 # Cache of year -> set(keys) so we only ever list a given year's prefix once,

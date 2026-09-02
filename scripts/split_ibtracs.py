@@ -27,8 +27,13 @@ RAW_IBTRACS_PATH = os.path.join(PROJECT_ROOT, "data", "ground_truth", "ibtracs.N
 
 # Locked events per the taxonomy/event manifest (section 5A of the execution manual)
 EVENTS = [
-    {"event_id": "biparjoy_2023", "ibtracs_name": "BIPARJOY", "season": 2023},
-    {"event_id": "amphan_2020", "ibtracs_name": "AMPHAN", "season": 2020},
+    {"event_id": "biparjoy_2023", "ibtracs_name": "BIPARJOY",    "season": 2023},
+    {"event_id": "amphan_2020",   "ibtracs_name": "AMPHAN",      "season": 2020},
+    {"event_id": "fani_2019",     "ibtracs_name": "FANI",        "season": 2019},
+    {"event_id": "tauktae_2021",  "ibtracs_name": "TAUKTAE",     "season": 2021},
+    {"event_id": "phailin_2013",  "ibtracs_name": "PHAILIN",     "season": 2013},
+    {"event_id": "hudhud_2014",   "ibtracs_name": "HUDHUD",      "season": 2014},
+    {"event_id": "ockhi_2017",    "ibtracs_name": "OCKHI",       "season": 2017},
 ]
 
 

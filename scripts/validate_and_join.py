@@ -40,6 +40,11 @@ MATCH_TOLERANCE_MINUTES = 90
 EVENT_KEY_MAP = {
     "biparjoy_2023": "biparjoy",
     "amphan_2020": "amphan",
+    "fani_2019": "fani",
+    "tauktae_2021": "tauktae",
+    "phailin_2013": "phailin",
+    "hudhud_2014": "hudhud",
+    "ockhi_2017": "ockhi",
 }
 
 
@@ -147,6 +152,24 @@ def validate_and_join():
         })
 
     out_df = pd.DataFrame(validation_records)
+
+    labels_csv = os.path.join(GROUND_TRUTH_DIR, "ground_truth_labels.csv")
+    if os.path.exists(labels_csv):
+        print(f"Found {labels_csv}, joining pattern labels...")
+        labels_df = pd.read_csv(labels_csv)
+        if "frame_id" in labels_df.columns and "ground_truth_label" in labels_df.columns:
+            # Join on file_id matching frame_id
+            out_df = pd.merge(
+                out_df.drop(columns=["pattern_label"]),
+                labels_df[["frame_id", "ground_truth_label"]].rename(columns={"frame_id": "file_id", "ground_truth_label": "pattern_label"}),
+                on="file_id",
+                how="left"
+            )
+            out_df["pattern_label"] = out_df["pattern_label"].fillna("unlabeled")
+    else:
+        print("NOTE: pattern_label is still 'unlabeled' for every row — this script only joins "
+              "position (lat/lon). Run label_frames.py and then rerun this script to join patterns.")
+
     out_df.to_csv(OUTPUT_MANIFEST, index=False)
 
     matched = len(out_df[out_df["center_lat"] != ""])
@@ -155,9 +178,6 @@ def validate_and_join():
     if unmatched_count:
         print(f"WARNING: {unmatched_count} frames had no ground-truth match — "
               f"check event naming in data/ground_truth/*.csv matches {list(EVENT_KEY_MAP.values())}.")
-    print("NOTE: pattern_label is still 'unlabeled' for every row — this script only joins "
-          "position (lat/lon), not taxonomy labels. Those come from Research's classification "
-          "labels and need a separate join before this is training-complete for the classifier head.")
     print(f"Training manifest written to: {OUTPUT_MANIFEST}")
 
 

@@ -73,8 +73,13 @@ class CycloneDataset(Dataset):
         self.require_pattern_label = require_pattern_label
 
         if require_pattern_label:
-            labels = sorted(self.manifest["pattern_label"].unique())
-            self.label_to_id = {label: i for i, label in enumerate(labels)}
+            self.label_to_id = {
+                "eye": 0,
+                "banding": 1,
+                "curved_band": 2,
+                "shear_affected": 3,
+                "disorganized": 4,
+            }
 
     def __len__(self):
         return len(self.manifest)

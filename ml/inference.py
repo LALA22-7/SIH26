@@ -162,8 +162,8 @@ def _get_service() -> InferenceService:
     if _service is None:
         _service = InferenceService(
             checkpoint_path=DEFAULT_CHECKPOINT,
-            predict_pattern=False,      # flip to True once pattern labels are trained
-            predict_confidence=False,   # flip to True after Day-6 calibration
+            predict_pattern=True,
+            predict_confidence=False,
             in_channels=2,
         )
     return _service
