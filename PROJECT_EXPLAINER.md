@@ -352,7 +352,7 @@ CycloneWatch is a prototype that proves the end-to-end concept works. The protot
 - Interactive dashboard with live + historical modes
 - NASA GIBS real satellite cloud imagery integrated
 - All IMD Gap Cases documented and visible on dashboard
-- HOSTING_GUIDE.md prepared for Render + Vercel deployment
+- Both frontend and backend repositories are fully documented and hosted live on Vercel and Render
 
 ### Phase 2 🎯 Immediate Next Step — Data Scaling
 
@@ -393,7 +393,7 @@ The long-term goal is integration into IMD's satellite analysis workflow. When a
 
 This is not replacing the meteorologist. It is giving them a 36-hour head start.
 
-> **📖 Go Deeper:** [HOSTING_GUIDE.md](HOSTING_GUIDE.md) — deploy the current prototype on Render + Vercel right now.
+> **📖 Live Demo:** See the live platform via the links in the root `README.md`.
 
 ---
 
@@ -473,4 +473,4 @@ CycloneWatch is a demonstration that a small, focused team with public data and 
 | Backend setup, API docs, technical integration | [backend/README.md](backend/README.md) |
 | Frontend setup, component structure | [frontend/README.md](frontend/README.md) |
 | ML model setup, training, architecture | [ml/README.md](ml/README.md) |
-| Deploying to Render + Vercel (hosting) | [HOSTING_GUIDE.md](HOSTING_GUIDE.md) |
+
