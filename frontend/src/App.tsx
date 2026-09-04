@@ -10,9 +10,16 @@ import { Bell, User } from 'lucide-react';
 function App() {
   const {
     introComplete, isPlaying, timelineIndex,
-    setTimelineIndex, activeCyclone, mode,
+    setTimelineIndex, mode, activeEventId,
     fetchLiveData, evidenceOpen, openEvidence, closeEvidence,
   } = useCycloneStore();
+
+  // Fetch event data when active event changes
+  useEffect(() => {
+    if (mode === 'HISTORICAL') {
+      useCycloneStore.getState().fetchEventData(activeEventId);
+    }
+  }, [mode, activeEventId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initial live data fetch
   useEffect(() => {
@@ -22,12 +29,14 @@ function App() {
   // Timeline auto-play
   useEffect(() => {
     if (!isPlaying || mode !== 'HISTORICAL') return;
-    const total = activeCyclone.observations.length;
+    const total = useCycloneStore.getState().apiReplayData?.steps?.length || 0;
+    if (total === 0) return;
+    
     const id = window.setInterval(() => {
       setTimelineIndex(timelineIndex + 1 >= total ? 0 : timelineIndex + 1);
     }, 1600);
     return () => clearInterval(id);
-  }, [isPlaying, timelineIndex, activeCyclone, mode, setTimelineIndex]);
+  }, [isPlaying, timelineIndex, mode, setTimelineIndex]);
 
   return (
     <div className="w-full h-screen bg-ocean-950 text-text-primary overflow-hidden flex flex-col p-3 lg:p-5">

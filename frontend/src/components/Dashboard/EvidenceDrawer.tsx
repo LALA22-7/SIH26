@@ -1,7 +1,7 @@
 import { X, Satellite, Clock, Hash, MapPin, Brain, Database, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCycloneStore } from '../../store/useCycloneStore';
-import { PATTERN_LABELS, PATTERN_COLORS } from '../../data/cyclones';
+import { CYCLONES, PATTERN_LABELS, PATTERN_COLORS } from '../../data/cyclones';
 
 interface EvidenceDrawerProps {
   open: boolean;
@@ -29,16 +29,19 @@ function Row({ icon, label, value, mono = false, highlight }: {
 }
 
 export function EvidenceDrawer({ open, onClose }: EvidenceDrawerProps) {
-  const { activeCyclone, getCurrentObservation, mode } = useCycloneStore();
+  const { activeEventId, getCurrentObservation, mode } = useCycloneStore();
+  const activeCycloneMeta = CYCLONES.find(c => c.id === activeEventId) || CYCLONES[0];
   const obs = getCurrentObservation();
 
-  // Simulated ML output — in production this comes from POST /api/ps70/classify
-  const patternLabel   = 'banding';
-  const patternConf    = 72;
+  if (!obs || !obs.classification) return null;
+
+  const { classification, step } = obs;
+  const patternLabel   = classification.pattern.label;
+  const patternConf    = classification.pattern.confidence ? (classification.pattern.confidence * 100).toFixed(1) : 0;
   const patternColor   = PATTERN_COLORS[patternLabel] ?? '#6495ED';
 
   const frameId = mode === 'HISTORICAL'
-    ? `${activeCyclone.id}_${obs.timestamp.replace(/[:\-TZ]/g, '').slice(0, 12)}`
+    ? step.observation_frame
     : 'live_frame';
 
   const obsTime = obs.timestamp.replace('T', ' ').replace('Z', ' UTC');
@@ -95,7 +98,7 @@ export function EvidenceDrawer({ open, onClose }: EvidenceDrawerProps) {
                 <Satellite size={20} className="text-ocean-750 mb-1" />
                 <p className="text-[9px] font-mono text-text-faint tracking-widest">HISTORICAL SATELLITE IMAGERY</p>
                 <p className="text-[8px] text-text-faint opacity-60 mt-0.5">
-                  {obs.timestamp.split('T')[0]} · {activeCyclone.name}
+                  {obs.timestamp.split('T')[0]} · {activeCycloneMeta.name}
                 </p>
               </div>
               {/* Channel color strip */}
@@ -136,21 +139,21 @@ export function EvidenceDrawer({ open, onClose }: EvidenceDrawerProps) {
                 value={`${PATTERN_LABELS[patternLabel]} (${patternConf}%)`}
                 highlight="text-confidence" />
               <Row icon={<Brain size={12} />}       label="Model Version"
-                value="ps70-classifier v2.0.0" mono />
+                value={classification.model?.name || "ps70-classifier v2.0.0"} mono />
               <Row icon={<Database size={12} />}    label="Preprocessing Version"
                 value="standardize_data.py v1.0" mono />
               <Row icon={<Database size={12} />}    label="Normalization"
                 value="per_frame_min_max" mono />
 
               {/* IMD gap note if applicable */}
-              {activeCyclone.imdGapCase && activeCyclone.imdGapNote && (
+              {activeCycloneMeta.imdGapCase && activeCycloneMeta.imdGapNote && (
                 <div className="mt-4 glass-card rounded-xl p-3 border border-alert/25">
                   <div className="flex gap-2">
                     <AlertTriangle size={12} className="text-alert flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="metric-label text-alert mb-1">IMD GAP CASE</p>
                       <p className="text-[10px] text-text-muted leading-relaxed">
-                        {activeCyclone.imdGapNote}
+                        {activeCycloneMeta.imdGapNote}
                       </p>
                     </div>
                   </div>

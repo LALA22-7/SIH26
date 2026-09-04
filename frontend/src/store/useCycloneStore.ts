@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { CYCLONES } from '../data/cyclones';
-import type { Cyclone, Observation } from '../data/cyclones';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api';
 
 export interface LiveData {
   status: 'LIVE' | 'UPDATING' | 'STALE' | 'OFFLINE';
@@ -24,12 +24,18 @@ export interface LiveData {
 interface CycloneState {
   mode:            'LIVE' | 'HISTORICAL';
   liveBasin:       'Bay of Bengal' | 'Arabian Sea';
-  activeCyclone:   Cyclone;
+  activeEventId:   string;
   timelineIndex:   number;
   isPlaying:       boolean;
   introComplete:   boolean;
   liveData:        LiveData;
-  evidenceOpen:    boolean;        // ← new: controls EvidenceDrawer
+  evidenceOpen:    boolean;
+  
+  // API Data
+  apiReplayData: any | null;
+  apiMetricsData: any | null;
+  apiClassificationsData: any | null;
+  isLoadingData: boolean;
 
   // Actions
   setMode:           (mode: 'LIVE' | 'HISTORICAL') => void;
@@ -41,9 +47,10 @@ interface CycloneState {
   fetchLiveData:     () => Promise<void>;
   openEvidence:      () => void;
   closeEvidence:     () => void;
+  fetchEventData:    (eventId: string) => Promise<void>;
 
   // Derived helpers
-  getCurrentObservation: () => Observation;
+  getCurrentObservation: () => any;
 }
 
 const DEFAULT_LIVE_DATA: LiveData = {
@@ -57,12 +64,17 @@ const DEFAULT_LIVE_DATA: LiveData = {
 export const useCycloneStore = create<CycloneState>((set, get) => ({
   mode:          'LIVE',
   liveBasin:     'Bay of Bengal',
-  activeCyclone: CYCLONES[0],
+  activeEventId: 'biparjoy_2023', // Default
   timelineIndex: 0,
   isPlaying:     false,
   introComplete: false,
   liveData:      DEFAULT_LIVE_DATA,
   evidenceOpen:  false,
+  
+  apiReplayData: null,
+  apiMetricsData: null,
+  apiClassificationsData: null,
+  isLoadingData: false,
 
   setMode: (mode) => {
     set({ mode });
@@ -75,15 +87,14 @@ export const useCycloneStore = create<CycloneState>((set, get) => ({
   },
 
   setActiveCyclone: (cycloneId) => {
-    const cyclone = CYCLONES.find(c => c.id === cycloneId);
-    if (cyclone) {
-      set({ activeCyclone: cyclone, timelineIndex: 0, mode: 'HISTORICAL', isPlaying: false });
-    }
+    set({ activeEventId: cycloneId, timelineIndex: 0, mode: 'HISTORICAL', isPlaying: false });
+    get().fetchEventData(cycloneId);
   },
 
   setTimelineIndex: (index) => {
-    const { activeCyclone } = get();
-    const clamped = Math.max(0, Math.min(index, activeCyclone.observations.length - 1));
+    const { apiReplayData } = get();
+    if (!apiReplayData?.steps?.length) return;
+    const clamped = Math.max(0, Math.min(index, apiReplayData.steps.length - 1));
     set({ timelineIndex: clamped });
   },
 
@@ -93,15 +104,57 @@ export const useCycloneStore = create<CycloneState>((set, get) => ({
   closeEvidence:    () => set({ evidenceOpen: false }),
 
   getCurrentObservation: () => {
-    const { activeCyclone, timelineIndex } = get();
-    return activeCyclone.observations[timelineIndex];
+    const { apiReplayData, apiClassificationsData, timelineIndex } = get();
+    if (!apiReplayData?.steps || !apiClassificationsData?.classifications) return null;
+    
+    const step = apiReplayData.steps[timelineIndex];
+    if (!step) return null;
+
+    // Find the matching classification for the base time
+    const classification = apiClassificationsData.classifications.find(
+      (c: any) => c.timestamp === step.time
+    ) || apiClassificationsData.classifications[timelineIndex]; // Fallback to index if timestamp doesn't perfectly match
+    
+    if (!classification) return null;
+
+    return {
+      timestamp: step.time,
+      lat: classification.center.lat,
+      lng: classification.center.lon,
+      step: step,
+      classification: classification
+    };
+  },
+  
+  fetchEventData: async (eventId: string) => {
+    set({ isLoadingData: true });
+    try {
+      const [replayRes, metricsRes, classRes] = await Promise.all([
+        fetch(`${API_BASE}/replay/${eventId}`),
+        fetch(`${API_BASE}/metrics?event_id=${eventId}`),
+        fetch(`${API_BASE}/ps70/classifications/${eventId}`)
+      ]);
+      
+      const replay = replayRes.ok ? await replayRes.json() : null;
+      const metrics = metricsRes.ok ? await metricsRes.json() : null;
+      const classifications = classRes.ok ? await classRes.json() : null;
+      
+      set({ 
+        apiReplayData: replay,
+        apiMetricsData: metrics,
+        apiClassificationsData: classifications,
+        isLoadingData: false
+      });
+    } catch (e) {
+      console.error("Failed to fetch event data:", e);
+      set({ isLoadingData: false });
+    }
   },
 
   fetchLiveData: async () => {
     set(s => ({ liveData: { ...s.liveData, status: 'UPDATING' } }));
     try {
       const { liveBasin } = get();
-      // Bay of Bengal approx center (15N, 88E), Arabian Sea approx center (17N, 68E)
       const lat = liveBasin === 'Bay of Bengal' ? 15.0 : 17.0;
       const lng = liveBasin === 'Bay of Bengal' ? 88.0 : 68.0;
 

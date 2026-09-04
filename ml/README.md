@@ -191,7 +191,7 @@ Expected output:
 
 ## What to do next (in order)
 
-### Step 1 — Get pattern labels from Research (Arshit)
+### Step 1 — Get pattern labels from Research (Research Lead)
 The manifest already has `pattern_label` column but every value is `"unlabeled"`.
 Research must deliver:
 ```csv
@@ -199,7 +199,7 @@ event_id,frame_id,ground_truth_label
 biparjoy_2023,biparjoy_2023_20230614T120000Z.npz,banding
 ...
 ```
-Then run `scripts/load_ground_truth.py` (to be created by Satyam) to join labels into the manifest.
+Then run `scripts/load_ground_truth.py` (to be created by Backend Lead) to join labels into the manifest.
 
 ### Step 2 — Retrain with pattern labels
 In `ml/src/train.py`:
@@ -240,7 +240,7 @@ Replace the provisional persistence fallback in `predict_sequence()` with a real
 | 3 | `shear_affected` |
 | 4 | `disorganized` |
 
-**Do not change these IDs or names without coordinating with Satyam (backend DB migration required).**
+**Do not change these IDs or names without coordinating with Backend Lead (backend DB migration required).**
 
 ---
 

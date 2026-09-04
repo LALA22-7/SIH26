@@ -9,6 +9,7 @@ import { LeafletMap } from './LeafletMap';
 import { mapResetView, mapFitBounds, mapFitTrack, mapZoomIn, mapZoomOut } from './mapHelpers';
 import { Timeline } from './Timeline';
 import { useCycloneStore } from '../../store/useCycloneStore';
+import { CYCLONES } from '../../data/cyclones';
 import type { LayerVisibility } from './LeafletMap';
 
 // ── Layer definitions ────────────────────────────────────────────────────────
@@ -47,7 +48,8 @@ const PRESETS: Record<Preset, LayerVisibility> = {
 };
 
 export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }) {
-  const { mode, getCurrentObservation, liveData, activeCyclone } = useCycloneStore();
+  const { mode, getCurrentObservation, liveData, activeEventId, apiClassificationsData, timelineIndex } = useCycloneStore();
+  const activeCycloneMeta = CYCLONES.find(c => c.id === activeEventId) || CYCLONES[0];
   const obs = getCurrentObservation();
   const isLive = mode === 'LIVE';
 
@@ -86,12 +88,16 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
     ? (liveData.lastUpdated
         ? new Date(liveData.lastUpdated).toUTCString().replace(' GMT', ' UTC')
         : 'FETCHING...')
-    : obs.timestamp.replace('T', ' ').replace('Z', ' UTC');
+    : (obs ? obs.timestamp.replace('T', ' ').replace('Z', ' UTC') : '...');
 
   // Track coords for fit-track action
-  const trackCoords: [number, number][] = mode === 'HISTORICAL'
-    ? activeCyclone.observations.map(o => [o.lat, o.lng])
-    : [];
+  const trackCoords: [number, number][] = [];
+  if (mode === 'HISTORICAL' && apiClassificationsData?.classifications) {
+    for (let i = 0; i <= timelineIndex; i++) {
+      const c = apiClassificationsData.classifications[i];
+      if (c && c.center) trackCoords.push([c.center.lat, c.center.lon]);
+    }
+  }
 
   return (
     <div className="relative w-full h-full bg-ocean-950">
@@ -277,7 +283,7 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
           </div>
         ) : (
           <div className="glass-pill flex items-center gap-2 px-3 py-1.5 rounded-full text-text-primary">
-            <span className="metric-label">HISTORICAL ARCHIVE · {activeCyclone.name} {activeCyclone.year}</span>
+            <span className="metric-label">HISTORICAL ARCHIVE · {activeCycloneMeta.name} {activeCycloneMeta.year}</span>
           </div>
         )}
 
@@ -287,7 +293,7 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
               ? (liveData.lastUpdated
                   ? new Date(liveData.lastUpdated).toISOString().slice(0, 19).replace('T', ' ') + ' UTC'
                   : 'UPDATING...')
-              : obs.timestamp.replace('T', ' ').replace('Z', ' UTC')}
+              : (obs ? obs.timestamp.replace('T', ' ').replace('Z', ' UTC') : '...')}
           </span>
         </div>
 

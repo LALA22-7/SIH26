@@ -18,7 +18,7 @@ import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from ml.src.model import CycloneCNN
+from ml.src.model import CycloneTemporalModel
 from ml.src.dataset import CycloneDataset, get_train_val_split
 
 # ── Config ─────────────────────────────────────────────────────────────────────
@@ -27,7 +27,7 @@ MANIFEST_CSV   = os.path.join(PROJECT_ROOT, "data", "training_manifest.csv")
 NORMALIZED_DIR = os.path.join(PROJECT_ROOT, "data", "normalized")
 CHECKPOINT_PATH = os.path.join(PROJECT_ROOT, "ml", "checkpoints", "model.pt")
 
-NUM_EPOCHS    = 100
+NUM_EPOCHS    = 200
 BATCH_SIZE    = 8       # larger batch = more stable gradients; AdaptiveAvgPool handles variable H/W
 LEARNING_RATE = 0.001
 
@@ -83,11 +83,9 @@ def run_training() -> None:
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True,  drop_last=False)
     val_loader   = DataLoader(val_dataset,   batch_size=BATCH_SIZE, shuffle=False, drop_last=False)
 
-    model = CycloneCNN(
+    model = CycloneTemporalModel(
         num_classes=5,
         in_channels=2,
-        predict_pattern=PREDICT_PATTERN,
-        predict_confidence=False,
     ).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
@@ -111,7 +109,7 @@ def run_training() -> None:
         running_loss = 0.0
 
         for images, targets in train_loader:
-            images      = images.to(device)
+            images      = images.to(device).unsqueeze(1)  # Add T=1 dimension: [B, 1, C, H, W]
             true_centers = targets["center"].to(device)
 
             optimizer.zero_grad()
@@ -136,7 +134,7 @@ def run_training() -> None:
 
         with torch.no_grad():
             for images, targets in val_loader:
-                images       = images.to(device)
+                images       = images.to(device).unsqueeze(1)
                 true_centers = targets["center"].to(device)
                 outputs      = model(images)
 

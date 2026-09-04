@@ -262,7 +262,7 @@ curl "http://localhost:8000/api/metrics?event_id=biparjoy_2023"
 
 ---
 
-### ML Team (Aditya) — Integration steps
+### ML Team (ML Lead) — Integration steps
 
 **What the backend expects from you, exactly:**
 
@@ -347,13 +347,13 @@ python -m pytest -v
 
 **After Day-6 calibration (uncertainty upgrade):**
 
-When your calibrated `sigma_lat`/`sigma_lon` values are ready, update `predict_sequence` to return real values instead of provisional ones. Then tell Satyam so the `uncertainty_status` field can be changed from `"provisional"` to `"calibrated"` and `coverage_target` can be set.
+When your calibrated `sigma_lat`/`sigma_lon` values are ready, update `predict_sequence` to return real values instead of provisional ones. Then tell Backend Lead so the `uncertainty_status` field can be changed from `"provisional"` to `"calibrated"` and `coverage_target` can be set.
 
 No backend code changes are needed for this — the API already handles it automatically when real sigma values come from the model.
 
 ---
 
-### Data Team (Abhinav) — Integration steps
+### Data Team (Data Lead) — Integration steps
 
 **1. File naming — follow this exactly:**
 
@@ -405,7 +405,7 @@ biparjoy_2023,2023-06-06T06:00:00Z,8.8,65.5
 
 All timestamps UTC. `lat`/`lon` in decimal degrees. This is consumed by `precompute_replay.py`.
 
-**4. Trigger the replay precompute (coordinate with Satyam):**
+**4. Trigger the replay precompute (coordinate with Backend Lead):**
 
 Once files are registered and best-track is placed:
 ```bash
@@ -416,7 +416,7 @@ After this runs, `/api/replay/biparjoy_2023` and `/api/metrics` will show real d
 
 ---
 
-### Research Team (Arshit) — Integration steps
+### Research Team (Research Lead) — Integration steps
 
 **What the backend needs from you:**
 
@@ -424,7 +424,7 @@ After this runs, `/api/replay/biparjoy_2023` and `/api/metrics` will show real d
 
 The backend already uses: `eye`, `banding`, `curved_band`, `shear_affected`, `disorganized`.
 
-If your taxonomy uses different names, coordinate with Satyam **before** any model training or database insertion. Changing label names after data is in the DB requires a migration.
+If your taxonomy uses different names, coordinate with Backend Lead **before** any model training or database insertion. Changing label names after data is in the DB requires a migration.
 
 **2. Ground-truth labels for classification accuracy.**
 
@@ -437,7 +437,7 @@ biparjoy_2023,frame_002,eye
 biparjoy_2023,frame_003,curved_band
 ```
 
-Satyam will load this into the `ground_truth_label` column of the `metrics` table. Without it, `classification.accuracy` stays `null` in `/api/metrics`.
+Backend Lead will load this into the `ground_truth_label` column of the `metrics` table. Without it, `classification.accuracy` stays `null` in `/api/metrics`.
 
 **3. IBTrACS best-track verification.**
 
@@ -445,7 +445,7 @@ The Data team places the best-track CSV. Research team verifies the timestamp fo
 
 ---
 
-### Frontend Team (Kavya) — Integration steps
+### Frontend Team (Frontend Lead) — Integration steps
 
 **The backend is ready to call right now** with stub data. Start building against live endpoints immediately.
 
@@ -487,7 +487,7 @@ Copy the example responses from `docs/api_contract.md` and hardcode them as JSON
 **CORS is already set to `*` in dev** — no browser errors when calling from `localhost:3000`.
 
 **For satellite tile serving on Leaflet:**
-The `?format=image` endpoint streams a raw GeoTIFF. If Leaflet needs it as XYZ tiles (`/tiles/{z}/{x}/{y}.png`), raise this with Satyam by Day 3 at the latest so a tile-serving layer can be added. Do not raise it on Day 6.
+The `?format=image` endpoint streams a raw GeoTIFF. If Leaflet needs it as XYZ tiles (`/tiles/{z}/{x}/{y}.png`), raise this with Backend Lead by Day 3 at the latest so a tile-serving layer can be added. Do not raise it on Day 6.
 
 **Coordinate conventions (important for map rendering):**
 - All GeoJSON coordinates in API responses are `[longitude, latitude]` — this is what Leaflet and GeoJSON standard expect
@@ -533,7 +533,7 @@ When all teams are ready, this is the exact order to run everything once:
 Step 1 — Data team places normalized satellite files in data/normalized/
 Step 2 — Research team places best-track CSV in data/ground_truth/
 Step 3 — ML team delivers ml/inference.py
-Step 4 — Update scripts/seed_db.py with real frame paths (Data team coordinates with Satyam)
+Step 4 — Update scripts/seed_db.py with real frame paths (Data team coordinates with Backend Lead)
 Step 5 — docker compose up
 Step 6 — docker compose exec api alembic upgrade head
 Step 7 — docker compose exec api python -m scripts.seed_db --reset
@@ -579,7 +579,7 @@ The following are frozen. Do not change these without a backend migration and a 
 
 If any integration step fails or a contract needs to change:
 
-1. Tell Satyam immediately — do not silently work around it
+1. Tell Backend Lead immediately — do not silently work around it
 2. State: what you expected, what actually happened, which file/endpoint
 3. If you need to change an API field, data shape, or label name — say so explicitly. Do not change silently.
 4. If blocked for more than 30 minutes, escalate
@@ -624,7 +624,7 @@ uncertainty_status = "calibrated" if pred.get("sigma_lat") and not settings.ml_f
 
 ### 2. Load Research team's ground-truth labels (waiting on: Research — Day 4/5)
 
-**Trigger:** Arshit delivers `data/labels/ground_truth_labels.csv` with columns `event_id, frame_id, ground_truth_label`.
+**Trigger:** Research Lead delivers `data/labels/ground_truth_labels.csv` with columns `event_id, frame_id, ground_truth_label`.
 
 **What to do:**
 Write a one-off loader (or add to `seed_db.py`) that reads the CSV and updates the `ground_truth_label` column in the `metrics` table:
@@ -655,7 +655,7 @@ Without this, `classification.accuracy` in `/api/metrics` stays `null`.
 
 ### 3. Register real satellite frames (waiting on: Data — Day 1/2)
 
-**Trigger:** Abhinav delivers normalized GeoTIFF files in `data/normalized/`.
+**Trigger:** Data Lead delivers normalized GeoTIFF files in `data/normalized/`.
 
 **What to do:**
 Update `scripts/seed_db.py` — replace or extend the 3 demo frame rows with real frame metadata. Each real frame needs:
@@ -677,7 +677,7 @@ docker compose exec api python -m scripts.precompute_replay --event_id biparjoy_
 
 ### 4. Satellite tile serving for Leaflet (waiting on: Frontend — Day 2/3)
 
-**Trigger:** Kavya confirms whether Leaflet can display a raw GeoTIFF via `?format=image` or needs XYZ tiles.
+**Trigger:** Frontend Lead confirms whether Leaflet can display a raw GeoTIFF via `?format=image` or needs XYZ tiles.
 
 **If raw GeoTIFF works:** No backend change needed. Done.
 

@@ -1,6 +1,6 @@
 # CycloneWatch — Pattern Taxonomy
 
-> **Status:** Locked. Do not rename labels without coordinating with Satyam (DB migration required).
+> **Status:** Locked. Do not rename labels without coordinating with Backend Lead (DB migration required).
 > **Source:** IBTrACS intensity thresholds + standard Dvorak technique structural descriptions.
 
 ---

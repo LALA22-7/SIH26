@@ -56,7 +56,7 @@ interface LeafletMapProps {
 }
 
 export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
-  const { mode, activeCyclone, getCurrentObservation, liveData } = useCycloneStore();
+  const { mode, activeEventId, getCurrentObservation, liveData, apiClassificationsData, timelineIndex } = useCycloneStore();
   const obs = getCurrentObservation();
   const mapInstanceRef = useRef<L.Map | null>(null);
 
@@ -69,34 +69,41 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
   // Fly to cyclone when event changes
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map) return;
+    if (!map || !obs) return;
     if (mode === 'HISTORICAL') {
       map.flyTo([obs.lat, obs.lng], 5, { duration: 1.4, easeLinearity: 0.25 });
     } else {
       map.flyTo(INDIA_CENTER, DEFAULT_ZOOM, { duration: 1.2, easeLinearity: 0.25 });
     }
-  }, [mode, activeCyclone.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mode, activeEventId]); // Only fly on event switch, not every timeline step
 
-  // Track coordinates for the full observed path
-  const trackCoords: [number, number][] = mode === 'HISTORICAL'
-    ? activeCyclone.observations.map(o => [o.lat, o.lng])
-    : [];
+  // Build the historical track coordinates up to current timeline index
+  const trackCoords: [number, number][] = [];
+  if (mode === 'HISTORICAL' && apiClassificationsData?.classifications) {
+    for (let i = 0; i <= timelineIndex; i++) {
+      const c = apiClassificationsData.classifications[i];
+      if (c && c.center) {
+        trackCoords.push([c.center.lat, c.center.lon]);
+      }
+    }
+  }
 
-  // Forecast track starts from last observation
-  const forecastCoords: [number, number][] = mode === 'HISTORICAL' && activeCyclone.forecastTrack.length
-    ? [
-        [activeCyclone.observations.at(-1)!.lat, activeCyclone.observations.at(-1)!.lng],
-        ...activeCyclone.forecastTrack.map(p => [p.lat, p.lng] as [number, number]),
-      ]
-    : [];
-
-  // NASA GIBS date string
-  const gibsDate = mode === 'LIVE'
-    ? new Date().toISOString().split('T')[0]
-    : obs.timestamp.split('T')[0];
-
-  // Uncertainty radius in metres (~85 km placeholder)
-  const uncertaintyRadiusM = 85_000;
+  // Build the forecast coords for this specific step (t12, t24)
+  const forecastCoords: [number, number][] = [];
+  if (mode === 'HISTORICAL' && obs?.step?.prediction) {
+    forecastCoords.push([obs.lat, obs.lng]); // Start at current center
+    if (obs.step.prediction.t12?.center) {
+      forecastCoords.push([obs.step.prediction.t12.center.lat, obs.step.prediction.t12.center.lon]);
+    }
+    if (obs.step.prediction.t24?.center) {
+      forecastCoords.push([obs.step.prediction.t24.center.lat, obs.step.prediction.t24.center.lon]);
+    }
+  }
+  
+  // Try to parse uncertainty geometry if the backend provided it
+  // In the stub API contract, this is provided at the predict endpoint.
+  // We'll leave the cone as a circle for now if not available.
+  const uncertaintyRadiusM = 85_000; 
 
   return (
     <div className="absolute inset-0 w-full h-full">
@@ -107,14 +114,13 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
         maxZoom={MAX_ZOOM}
         maxBounds={INDIA_BOUNDS}
         maxBoundsViscosity={1.0}
-        worldCopyJump={false}        // ← disables world repetition
+        worldCopyJump={false}
         zoomControl={false}
         attributionControl={false}
         style={{ width: '100%', height: '100%', background: '#080e18' }}
       >
         <MapController onMapReady={handleMapReady} />
 
-        {/* ── Base geography ── */}
         <TileLayer
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           attribution="© Esri"
@@ -122,20 +128,27 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
           className="base-tiles"
         />
 
-        {/* ── NASA GIBS satellite overlay ── */}
-        {layers.satellite && (
+        {/* NASA GIBS Cloud Layer (Historical) */}
+        {mode === 'HISTORICAL' && layers.satellite && obs && (
           <TileLayer
-            key={gibsDate}
-            url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${gibsDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`}
-            attribution="© NASA GIBS"
+            url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${obs.timestamp.split('T')[0]}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`}
+            opacity={0.65}
             zIndex={2}
-            opacity={0.82}
             className="cloud-layer"
           />
         )}
 
-        {/* ── Historical layers ── */}
-        {mode === 'HISTORICAL' && (
+        {/* Live fake cloud layer for visual */}
+        {mode === 'LIVE' && layers.satellite && (
+           <TileLayer
+             url="https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2023-06-13/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg"
+             opacity={0.65}
+             zIndex={2}
+             className="cloud-layer"
+           />
+        )}
+
+        {mode === 'HISTORICAL' && obs && (
           <>
             {/* Observed track */}
             {layers.trajectory && trackCoords.length > 1 && (
@@ -198,7 +211,7 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
 
       </MapContainer>
 
-      {/* Leaflet CSS overrides — scoped to this component */}
+      {/* Leaflet CSS overrides */}
       <style>{`
         .leaflet-container { background: #080e18 !important; }
         .base-tiles        { filter: brightness(0.65) contrast(1.1) saturate(0.75) !important; }

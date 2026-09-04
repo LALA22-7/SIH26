@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useCycloneStore } from '../../store/useCycloneStore';
-import { BASELINES, PATTERN_LABELS, PATTERN_COLORS } from '../../data/cyclones';
+import { CYCLONES, PATTERN_LABELS, PATTERN_COLORS, BASELINES } from '../../data/cyclones';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -180,28 +180,28 @@ function LiveMetrics() {
 
 // ── HISTORICAL MODE ───────────────────────────────────────────────────────────
 function HistoricalMetrics() {
-  const { activeCyclone, getCurrentObservation, timelineIndex } = useCycloneStore();
+  const { activeEventId, getCurrentObservation, apiMetricsData } = useCycloneStore();
+  const activeCycloneMeta = CYCLONES.find(c => c.id === activeEventId) || CYCLONES[0];
   const obs = getCurrentObservation();
-  const isHazardous = obs.windSpeed >= BASELINES.windSpeed;
-  const isOceanHazardous = obs.currentVelocity > 2.0;
 
-  // Pseudo-random ML output based on cyclone ID and timeline step to simulate dynamic inference
-  const hash = activeCyclone.id.charCodeAt(0) + timelineIndex * 13;
-  const labels = Object.keys(PATTERN_LABELS);
-  const patternLabel = labels[hash % labels.length];
-  const patternConf  = 65 + (hash % 30) + ((timelineIndex * 7) % 5);
+  if (!obs || !obs.step) {
+    return <div className="text-text-faint text-sm p-4">Loading event data...</div>;
+  }
 
-  // Pressure tendency (compare to previous obs if available)
-  const prevObs = timelineIndex > 0 ? activeCyclone.observations[timelineIndex - 1] : null;
-  const pressureTendency = prevObs ? (obs.pressure - prevObs.pressure).toFixed(1) : null;
+  const { classification, step } = obs;
+  // Truncate frame_id for cleaner display
+  const displayFrameId = obs.classification?.frame_id 
+    ? obs.classification.frame_id.substring(0, 16) + '...'
+    : 'N/A';
 
-  const categoryFull: Record<string, string> = {
-    CS:   'Cyclonic Storm',
-    SCS:  'Severe Cyclonic Storm',
-    VSCS: 'Very Severe Cyclonic Storm',
-    ESCS: 'Extremely Severe Cyclonic Storm',
-    SUCS: 'Super Cyclonic Storm',
-  };
+  // Format confidence nicely to avoid literal 0.0% looking like a bug
+  const patternLabel = obs.classification?.pattern?.label || 'unlabeled';
+  const rawConf = obs.classification?.pattern?.confidence || 0;
+  const patternConf = rawConf > 0 && rawConf < 0.05 
+    ? '< 5.0'
+    : (rawConf * 100).toFixed(1);
+    
+  const confColor = rawConf > 0.8 ? 'text-ir' : 'text-confidence';
 
   const obsTimestamp = obs.timestamp.replace('T', ' ').replace('Z', ' UTC');
 
@@ -209,14 +209,14 @@ function HistoricalMetrics() {
     <div className="flex flex-col gap-3">
 
       {/* ── IMD gap case banner ── */}
-      {activeCyclone.imdGapCase && (
+      {activeCycloneMeta.imdGapCase && (
         <div className="glass-card rounded-xl p-3 border border-alert/30 bg-alert/5">
           <div className="flex items-start gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-alert mt-1 flex-shrink-0 animate-blink" />
             <div>
               <p className="text-[10px] font-bold text-alert tracking-widest">IMD GAP CASE</p>
               <p className="text-[10px] text-text-muted leading-relaxed mt-0.5">
-                {activeCyclone.imdGapNote}
+                {activeCycloneMeta.imdGapNote}
               </p>
             </div>
           </div>
@@ -225,135 +225,97 @@ function HistoricalMetrics() {
 
       {/* ── CycloneWatch classification ── */}
       <div className="glass-card rounded-xl p-4">
-        <SectionHeader title="CycloneWatch ML" badge="PREDICTION" badgeVariant="ml" />
+        <SectionHeader title="Classification Inference" badge="LIVE MODEL" badgeVariant="ml" />
 
         {/* Pattern display */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5"
             style={{ background: PATTERN_COLORS[patternLabel] ?? '#6495ED',
                      boxShadow: `0 0 8px ${PATTERN_COLORS[patternLabel] ?? '#6495ED'}` }} />
-          <div>
-            <p className="text-sm font-semibold tracking-wide text-text-primary">
-              {PATTERN_LABELS[patternLabel] ?? patternLabel}
-            </p>
-            <p className="text-[10px] text-text-muted">Pattern classification</p>
-          </div>
-          <div className="ml-auto text-right">
-            <p className="font-mono text-lg font-semibold text-confidence">{patternConf}%</p>
-            <p className="metric-label">CONFIDENCE</p>
-          </div>
-        </div>
+          <div className="flex-1">
+            <div className="flex justify-between items-baseline mb-4">
+              <div>
+                <h3 className="text-sm font-bold text-text-primary tracking-widest uppercase">
+                  {PATTERN_LABELS[patternLabel] || patternLabel.replace('_', ' ')}
+                </h3>
+                <p className="text-[10px] text-text-muted mt-1">Current structural pattern</p>
+              </div>
+              <div className="text-right">
+                <span className={`text-sm font-mono font-bold ${confColor}`}>
+                  {patternConf}%
+                </span>
+                <p className="text-[8px] tracking-[0.2em] text-text-muted mt-1 uppercase">Confidence</p>
+              </div>
+            </div>
 
-        {/* Confidence bar */}
-        <div className="w-full h-1 bg-ocean-800 rounded-full mb-4 overflow-hidden">
-          <div className="h-full bg-confidence rounded-full" style={{ width: `${patternConf}%` }} />
+            {/* Confidence bar */}
+            <div className="w-full h-1 bg-ocean-800 rounded-full overflow-hidden">
+              <div className="h-full bg-confidence rounded-full transition-all duration-300" style={{ width: `${parseFloat(patternConf) > 100 ? 100 : patternConf}%` }} />
+            </div>
+          </div>
         </div>
 
         <MetricGrid>
-          <MetricCell label="Predicted Lat" value={`${(obs.lat + 0.1).toFixed(2)}°N`} />
-          <MetricCell label="Predicted Lon" value={`${(obs.lng - 0.1).toFixed(2)}°E`} />
+          <MetricCell label="Center Lat" value={`${obs.lat.toFixed(2)}°N`} />
+          <MetricCell label="Center Lon" value={`${obs.lng.toFixed(2)}°E`} />
+          <MetricCell label="Model" value={classification?.model?.name || 'ps70-classifier'} />
+          <MetricCell label="Frame ID" value={displayFrameId} />
         </MetricGrid>
         <p className="text-[9px] text-text-faint font-mono mt-2">
-          Model: ps70-classifier v2.0.0 · {obsTimestamp}
+          {obsTimestamp}
         </p>
       </div>
 
-      {/* ── Cyclone Intensity ── */}
+      {/* ── Forecast Performance ── */}
       <div className="glass-card rounded-xl p-4">
-        <SectionHeader title="Cyclone Intensity" badge="OBSERVED" badgeVariant="historical" />
-        <div className="mb-3">
-          <p className={`text-sm font-bold tracking-wide ${isHazardous ? 'text-alert' : 'text-text-primary'}`}>
-            {categoryFull[obs.category] ?? obs.category}
+        <SectionHeader title="Temporal Prediction" badge="T+12 / T+24" badgeVariant="ml" />
+        
+        <MetricGrid>
+          <MetricCell label="T+12 Forecast Error" 
+            value={step.errors?.t12_km?.toFixed(1) || 'N/A'} 
+            unit="km" 
+            color={step.errors?.t12_km > 100 ? 'text-amber-400' : 'text-text-primary'} />
+          <MetricCell label="T+24 Forecast Error" 
+            value={step.errors?.t24_km?.toFixed(1) || 'N/A'} 
+            unit="km" 
+            color={step.errors?.t24_km > 200 ? 'text-alert' : 'text-text-primary'} />
+        </MetricGrid>
+
+        <div className="mt-3 pt-3 border-t border-ocean-800">
+          <p className="text-[9px] text-text-faint font-mono mt-1">
+            Prediction distance to actual track (Haversine)
           </p>
-          <p className="text-[10px] text-text-muted">{obs.status}</p>
         </div>
-        <MetricGrid>
-          <MetricCell label="Max Sustained Wind" value={obs.windSpeed} unit="km/h"
-            color={isHazardous ? 'text-alert' : 'text-accent'} />
-          <MetricCell label="Wind Gust" value={obs.gustSpeed} unit="km/h"
-            color={isHazardous ? 'text-alert' : 'text-text-primary'} />
-          <MetricCell label="Central Pressure" value={obs.pressure} unit="hPa" />
-          <MetricCell label="Pressure Change"
-            value={pressureTendency != null ? `${Number(pressureTendency) >= 0 ? '+' : ''}${pressureTendency}` : null}
-            unit="hPa/step"
-            unavailable={pressureTendency == null}
-            color={pressureTendency && Number(pressureTendency) < -5 ? 'text-alert' : 'text-text-primary'} />
-        </MetricGrid>
-        <p className="text-[9px] text-text-faint font-mono mt-2">
-          Historical record · {obsTimestamp}
-        </p>
       </div>
 
-      {/* ── Movement ── */}
+      {/* ── Event Metrics Aggregation ── */}
+      {apiMetricsData && (
+        <div className="glass-card rounded-xl p-4">
+          <SectionHeader title="Event Evaluation Metrics" badge="AGGREGATED" badgeVariant="default" />
+          <MetricGrid>
+            <MetricCell label="Avg MAE (T+12)" value={apiMetricsData.track?.mae_km_t12?.toFixed(1) || 'N/A'} unit="km" />
+            <MetricCell label="Avg MAE (T+24)" value={apiMetricsData.track?.mae_km_t24?.toFixed(1) || 'N/A'} unit="km" />
+            <MetricCell label="Classification Acc." value={apiMetricsData.classification?.accuracy ? (apiMetricsData.classification.accuracy * 100).toFixed(1) : 'N/A'} unit="%" color="text-confidence" />
+            <MetricCell label="Sample Size" value={apiMetricsData.classification?.sample_count || '0'} unit="frames" />
+          </MetricGrid>
+        </div>
+      )}
+
+      {/* ── Baseline Information ── */}
       <div className="glass-card rounded-xl p-4">
-        <SectionHeader title="Movement" badge="OBSERVED" badgeVariant="historical" />
+        <SectionHeader title="Storm Identity" badge="ARCHIVE" badgeVariant="historical" />
         <MetricGrid>
-          <MetricCell label="Latitude" value={`${obs.lat.toFixed(2)}°N`} />
-          <MetricCell label="Longitude" value={`${obs.lng.toFixed(2)}°E`} />
-          <MetricCell label="Movement Speed" value={obs.movementSpeed} unit="km/h" />
-          <MetricCell label="Movement Direction" value={`${obs.heading}°`} />
-          <MetricCell label="Distance Travelled" unavailable />
-        </MetricGrid>
-        <p className="text-[9px] text-text-faint font-mono mt-2">
-          Historical record · {obsTimestamp}
-        </p>
-      </div>
-
-      {/* ── Ocean ── */}
-      <div className="glass-card rounded-xl p-4">
-        <SectionHeader title="Ocean" badge="OBSERVED" badgeVariant="historical" />
-        <MetricGrid>
-          <MetricCell label="Sea Surface Temp" value={obs.sst} unit="°C" color="text-ir" />
-          <MetricCell label="SST Anomaly" unavailable />
-          <MetricCell label="Ocean Current Speed" value={obs.currentVelocity} unit="m/s" color={isOceanHazardous ? 'text-alert' : 'text-wv'} />
-          <MetricCell label="Ocean Current Direction" unavailable />
-          <MetricCell label="Wave Height" unavailable />
-          <MetricCell label="Wave Period" unavailable />
-          <MetricCell label="Ocean Heat Content" unavailable />
-        </MetricGrid>
-        <p className="text-[9px] text-text-faint font-mono mt-2">
-          Historical record · {obsTimestamp}
-        </p>
-      </div>
-
-      {/* ── Atmosphere ── */}
-      <div className="glass-card rounded-xl p-4">
-        <SectionHeader title="Atmosphere" badge="OBSERVED" badgeVariant="historical" />
-        <MetricGrid>
-          <MetricCell label="Atmospheric Pressure" value={obs.pressure} unit="hPa" />
-          <MetricCell label="Relative Humidity" unavailable />
-          <MetricCell label="Wind Shear" unavailable />
-          <MetricCell label="Vorticity" unavailable />
-          <MetricCell label="Rainfall" value={obs.rainfall24h} unit="mm" color={obs.rainfall24h >= BASELINES.rainfall24h ? 'text-alert' : 'text-text-primary'} />
-          <MetricCell label="Upper-Level Divergence" unavailable />
-        </MetricGrid>
-        <p className="text-[9px] text-text-faint font-mono mt-2">
-          Historical record · {obsTimestamp}
-        </p>
-      </div>
-
-      {/* ── Hazard ── */}
-      <div className={`glass-card rounded-xl p-4 ${isHazardous ? 'border border-alert/30 bg-alert/5' : ''}`}>
-        <SectionHeader title="Hazard / Impact" badge="OBSERVED" badgeVariant={isHazardous ? 'alert' : 'historical'} />
-        <MetricGrid>
-          <MetricCell label="Distance to Coast" unavailable />
-          <MetricCell label="Storm Surge" unavailable />
-          <MetricCell label="Rainfall Hazard"
-            value={obs.rainfall24h >= BASELINES.rainfall24h ? 'EXTREME' : 'MODERATE'}
-            color={obs.rainfall24h >= BASELINES.rainfall24h ? 'text-alert' : 'text-amber-400'} />
-          <MetricCell label="Coastal Hazard" value={isHazardous ? 'CRITICAL' : 'MODERATE'} color={isHazardous ? 'text-alert' : 'text-amber-400'} />
+          <MetricCell label="Peak Wind" value={activeCycloneMeta.peakWind} unit="km/h" />
+          <MetricCell label="Min Pressure" value={activeCycloneMeta.minPressure} unit="hPa" />
         </MetricGrid>
 
         <div className="mt-3 pt-3 border-t border-ocean-800">
           <p className="metric-label text-text-faint mb-1">LANDFALL DATA</p>
           <p className="text-[11px] text-text-secondary font-mono leading-relaxed">
-            Time: {activeCyclone.landfallTime.replace('T', ' ').replace('Z', ' UTC')}<br />
-            Region: {activeCyclone.landfallRegion}
+            Time: {activeCycloneMeta.landfallTime.replace('T', ' ').replace('Z', ' UTC')}<br />
+            Region: {activeCycloneMeta.landfallRegion}
           </p>
         </div>
-        <p className="text-[9px] text-text-faint font-mono mt-2">
-          Historical record · IMD/RSMC New Delhi
-        </p>
       </div>
 
     </div>
