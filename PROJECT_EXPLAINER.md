@@ -464,6 +464,7 @@ CycloneWatch is a demonstration that a small, focused team with public data and 
 | The 5 structural pattern definitions | [docs/taxonomy.md](docs/taxonomy.md) |
 | The 7 training cyclones and why each was chosen | [docs/cyclone_timeline.md](docs/cyclone_timeline.md) |
 | What the AI is honestly limited by | [docs/limitations.md](docs/limitations.md) |
+| Future improvements, pending work, and pitch points | [docs/FUTURE_IMPROVEMENTS.md](docs/FUTURE_IMPROVEMENTS.md) |
 | The full API contract for the backend | [docs/api_contract.md](docs/api_contract.md) |
 | How the data pipeline works (non-technical) | [data/EXPLAINER.md](data/EXPLAINER.md) |
 | How the AI brain works (non-technical) | [ml/EXPLAINER.md](ml/EXPLAINER.md) |

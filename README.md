@@ -3,6 +3,10 @@
 **Smart India Hackathon 2026 Submission (PS70)**  
 *AI/ML-based system for identification, classification, and prediction of different tropical cyclone patterns using multi-source satellite data.*
 
+### 🌐 Live Demo
+- **Frontend Dashboard:** [https://sih-26-i1ck42d98-lala22-7s-projects.vercel.app/](https://sih-26-i1ck42d98-lala22-7s-projects.vercel.app/)
+- **Backend API (Render):** [https://sih26-o6nv.onrender.com/health](https://sih26-o6nv.onrender.com/health)
+
 ---
 
 ## 🌪️ Project Overview
@@ -54,4 +58,6 @@ Our current prototype is constrained by the 4km-resolution GridSat-B1 dataset. T
 
 Moving from 4km to 1km resolution will provide the ML model with 16x more spatial data per frame. Combined with our fully staged temporal sequence architecture (ConvLSTM), this will allow our MAE to drop below 100km, rivaling traditional physics models while maintaining our massive speed advantage.
 
-For a deeper dive into the project's logic and future, please read the [Main Project Explainer](PROJECT_EXPLAINER.md).
+**Read our full Pitch & Roadmap here:** [docs/FUTURE_IMPROVEMENTS.md](docs/FUTURE_IMPROVEMENTS.md)
+
+For a deeper dive into the project's logic and architecture, please read the [Main Project Explainer](PROJECT_EXPLAINER.md).
