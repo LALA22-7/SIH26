@@ -12,5 +12,6 @@ build/
 .coverage
 htmlcov/
 *.db
+!cyclonewatch.db
 *.sqlite3
 alembic/versions/__pycache__/
