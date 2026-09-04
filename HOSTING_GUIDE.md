@@ -1,10 +1,10 @@
-﻿# CycloneWatch: Hosting & Deployment Guide
+# CycloneWatch: Hosting & Deployment Guide
 
 This guide provides step-by-step instructions for deploying the CycloneWatch prototype to the internet for your SIH presentation. Read the entire guide before starting.
 
 We split the deployment into two services:
 1. **Frontend → Vercel** (Free, instant, zero-config for React/Vite)
-2. **Backend + ML → Render** (Docker container with SQLite database)
+2. **Backend + ML → Hugging Face Spaces** (Free Docker container with 16GB RAM) OR **Ngrok** (Local tunnel for zero-cost demoing)
 
 **Estimated total time: 20–30 minutes** if your repository is already clean and the build works locally.
 
@@ -76,86 +76,55 @@ https://cyclonewatch-abc123.vercel.app
 
 ---
 
-## Step 2: Deploy the Backend (Render)
+## Step 2: Deploy the Backend (Free Alternatives)
 
-### 2a. Verify the Dockerfile exists
-The backend must have a Dockerfile. Check:
-```bash
-ls backend/Dockerfile
-```
+Because our backend uses heavy Machine Learning models (PyTorch), it requires at least 1GB of RAM to run without crashing. Most "Free Tier" cloud providers (like Render or Heroku) only give you 512MB of RAM, which will crash instantly. 
 
-If it does not exist, see the Dockerfile section at the bottom of this guide.
+Here are the two best 100% free ways to host the backend for your presentation:
 
-### 2b. Update CORS origins
-Before deploying, add your Vercel URL to the backend CORS configuration.
+### Option A: Hugging Face Spaces (Best for always-on Cloud)
+Hugging Face Spaces gives you a free Docker environment with 16GB of RAM and 2 vCPUs — perfect for PyTorch APIs.
 
-In `backend/app/core/config.py` or `.env`, set:
-```
-CORS_ORIGINS=https://cyclonewatch-abc123.vercel.app
-```
+1. Go to [Hugging Face Spaces](https://huggingface.co/spaces) and create a free account.
+2. Click **Create new Space**.
+3. **Space name:** `cyclonewatch-api`
+4. **License:** `MIT`
+5. **Select the Space SDK:** Choose **Docker** (Blank).
+6. **Space Hardware:** Free (2 vCPU, 16GB RAM).
+7. Click **Create Space**.
+8. Hugging Face provides instructions on how to clone this blank space. Clone it to your computer, then copy **everything** inside your `backend/` folder into that cloned repository.
+9. Create a `Dockerfile` in that folder if you don't have one (see the reference at the bottom of this guide).
+10. Commit and push back to Hugging Face.
+11. Hugging Face will build the Docker container and give you a live URL (e.g., `https://yourusername-cyclonewatch-api.hf.space`).
+12. *Note on CORS:* Make sure to update `CORS_ORIGINS=*` in your code before pushing, so Vercel can talk to it.
 
-Or if using the wildcard for development/demo:
-```
-CORS_ORIGINS=*
-```
+### Option B: Localhost + Ngrok (Most Reliable for Hackathon Demos)
+Hackathon Wi-Fi is notoriously bad, and cloud servers can sometimes sleep. The most bulletproof, zero-cost method is to run the backend on your own laptop and expose it to the internet using Ngrok.
 
-> For SIH demo purposes, `CORS_ORIGINS=*` is acceptable. In production, lock this to your Vercel URL.
-
-### 2c. Create a Render Web Service
-1. Go to [render.com](https://render.com) and log in with GitHub.
-2. Click **"New" → "Web Service"**.
-3. Connect your `SIH26` repository.
-
-### 2d. Configure Render
-| Setting | Value |
-|---|---|
-| **Name** | `cyclonewatch-backend` |
-| **Region** | Singapore (closest to India — lowest latency) |
-| **Branch** | `main` |
-| **Root Directory** | `backend` |
-| **Environment** | **Docker** ← Critical! |
-| **Instance Type** | **Standard ($7/mo)** — Free tier has only 512MB RAM; PyTorch requires ≥1GB |
-
-### 2e. Set environment variables on Render
-In the **Environment Variables** section on Render:
-
-| Key | Value |
-|---|---|
-| `DATABASE_URL` | `sqlite+aiosqlite:///cyclonewatch.db` |
-| `CORS_ORIGINS` | `https://your-vercel-url.vercel.app` |
-| `ML_FORCE_STUB` | `false` |
-| `DEBUG` | `false` |
-
-### 2f. Deploy
-Click **"Create Web Service"**. Render will:
-1. Clone your repository
-2. Build the Docker image (downloads Python dependencies including PyTorch — takes ~10 minutes on first build)
-3. Run the container
-
-**Expected first build time: 8–15 minutes.**
-
-When complete, Render gives you a URL like:
-```
-https://cyclonewatch-backend.onrender.com
-```
-
-Test it:
-```bash
-curl https://cyclonewatch-backend.onrender.com/health
-# Expected: {"status":"ok","version":"v1"}
-```
-
----
+1. Install [Ngrok](https://ngrok.com/download) and create a free account to get your authtoken.
+2. Run your backend locally:
+   ```bash
+   cd backend
+   $env:DATABASE_URL="sqlite+aiosqlite:///cyclonewatch.db"
+   $env:PYTHONPATH="d:\PROJECTS\SIH26\backend;d:\PROJECTS\SIH26"
+   uvicorn app.main:app --host 127.0.0.1 --port 8001
+   ```
+3. Open a new terminal and run Ngrok to tunnel port 8001 to the internet:
+   ```bash
+   ngrok http 8001
+   ```
+4. Ngrok will give you a "Forwarding" URL (e.g., `https://a1b2c3d4.ngrok-free.app`).
+5. This URL is your live backend API! As long as your laptop is awake, the internet can reach your backend.
 
 ## Step 3: Connect Frontend to Backend
 
-### 3a. Update the Vercel environment variable
+3a. Update the Vercel environment variable
 1. Go to your Vercel dashboard.
 2. Select the `cyclonewatch` project.
 3. Go to **Settings → Environment Variables**.
-4. Update `VITE_API_BASE_URL` to your actual Render URL:
+4. Update `VITE_API_BASE_URL` to your actual backend URL (either your Hugging Face Space URL or your Ngrok URL). Make sure to append `/api` to the end if your FastAPI routes require it.
    ```
-   VITE_API_BASE_URL=https://cyclonewatch-backend.onrender.com/api
+   VITE_API_BASE_URL=https://your-chosen-backend-url/api
    ```
 5. Click **Save**.
 
@@ -177,7 +146,7 @@ Open your Vercel URL and:
 4. ✅ **Map:** The Esri satellite base layer should load; NASA GIBS cloud layer should overlay.
 5. ✅ **Metrics panel:** Classification pattern and confidence should display.
 
-If any step fails, check the **Render logs** for backend errors and the **Browser DevTools Console** for frontend errors.
+If any step fails, check the backend terminal (if using Ngrok) or the Hugging Face Spaces logs, and the **Browser DevTools Console** for frontend errors.
 
 ---
 
@@ -186,19 +155,15 @@ If any step fails, check the **Render logs** for backend errors and the **Browse
 ### "Loading event data..." spinner never goes away
 The frontend cannot reach the backend API.
 - Check `VITE_API_BASE_URL` in Vercel environment variables (no trailing slash, starts with `https://`).
-- Visit `https://your-backend.onrender.com/health` directly in a browser — if it fails, the backend is not running.
-- Check Render logs for Python errors.
-
-### Render deploy fails with "Out of memory"
-The Free Tier (512MB) is not enough for PyTorch.
-- Upgrade to the **Standard instance ($7/month)** on Render.
+- Visit `https://your-backend-url/health` directly in a browser — if it fails, the backend is not running.
+- If using Ngrok, ensure your laptop didn't go to sleep and Ngrok is still running.
 
 ### Build fails: "Cannot find module"
 - Run `npm run build` locally first and fix all TypeScript errors before pushing.
 
 ### CORS error in browser console
 - The frontend URL is not in the backend's CORS whitelist.
-- Update `CORS_ORIGINS` in Render environment variables and redeploy the backend.
+- If using Ngrok or Hugging Face, the easiest fix for a demo is to set `CORS_ORIGINS=*` in the backend code and restart the server/space.
 
 ### NASA GIBS cloud layer not showing
 - This is a public API with rate limits. It may load slowly. Check the browser Network tab to see if GIBS tile requests are returning 200 or 429 (rate limited).
