@@ -4,7 +4,7 @@
 *AI/ML-based system for identification, classification, and prediction of different tropical cyclone patterns using multi-source satellite data.*
 
 ### 🌐 Live Demo
-- **Frontend Dashboard:** [https://sih-26-i1ck42d98-lala22-7s-projects.vercel.app/](https://sih-26-i1ck42d98-lala22-7s-projects.vercel.app/)
+- **Frontend Dashboard:** [https://sih-26-one.vercel.app/](https://sih-26-one.vercel.app/)
 - **Backend API (Render):** [https://sih26-o6nv.onrender.com/health](https://sih26-o6nv.onrender.com/health)
 
 ---
