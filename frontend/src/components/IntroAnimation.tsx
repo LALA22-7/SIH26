@@ -57,7 +57,7 @@ export function IntroAnimation() {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="text-4xl font-light tracking-[0.3em] text-text-main mb-2"
             >
-              CYCLOWATCH
+              CYCLONEWATCH
             </motion.h1>
             
             <motion.p

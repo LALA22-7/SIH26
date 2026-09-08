@@ -49,7 +49,7 @@ function App() {
         className="flex justify-between items-center w-full px-1 mb-3 transition-opacity duration-700"
         style={{ opacity: introComplete ? 1 : 0 }}
       >
-        <h1 className="text-xl tracking-[0.15em] text-text-primary font-bold uppercase">CYCLOWATCH</h1>
+        <h1 className="text-xl tracking-[0.15em] text-text-primary font-bold uppercase">CYCLONEWATCH</h1>
         <div className="flex items-center gap-2">
           <button className="w-8 h-8 rounded-lg glass-chrome flex items-center justify-center text-text-muted hover:text-text-primary transition-colors">
             <User size={13} />
