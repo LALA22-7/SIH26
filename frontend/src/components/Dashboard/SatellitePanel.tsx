@@ -250,7 +250,10 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
             liveData.status === 'LIVE'
               ? 'border-green-500/40 text-green-400'
               : 'border-amber-500/40 text-amber-400'
-          }`}>
+          }`}> 
+            {liveData.status === 'LIVE' && (
+  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+)}
             <Radio size={11} className={liveData.status === 'LIVE' ? 'animate-blink' : ''} />
             <span className="metric-label text-current">
               {liveData.status === 'LIVE' ? 'LIVE SATELLITE FEED'

@@ -111,7 +111,7 @@ export function TopNavigation() {
                       <button
                         key={cyclone.id}
                         onClick={() => { setActiveCyclone(cyclone.id); setDropdownOpen(false); }}
-                        className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-ocean-850 transition-colors text-left ${
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-ocean-850 transition-colors text-left ${
                           activeEventId === cyclone.id && mode === 'HISTORICAL' ? 'bg-ocean-850' : ''
                         }`}
                       >

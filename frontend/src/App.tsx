@@ -70,8 +70,38 @@ function App() {
           WebkitBackdropFilter: 'blur(24px)'
         }}
       >
+<<<<<<< HEAD
         {/* Left Navigation */}
         <SideNav />
+=======
+        <TopNavigation />
+
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-0">
+
+          {/* ── Left: Map (70%) ── */}
+          <div className="flex-none h-[50vh] lg:h-auto lg:flex-[0.70] min-h-0 flex flex-col border-b lg:border-b-0 lg:border-r border-ocean-800">
+            {/* Section label */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-b border-ocean-800/50">
+             <div className="flex items-center gap-2">
+  {mode === 'LIVE' && (
+    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+  )}
+
+  <span className="metric-label text-text-primary font-semibold">
+    {mode === 'LIVE' ? 'LIVE SATELLITE IMAGING' : 'HISTORICAL SATELLITE ARCHIVE'}
+  </span>
+</div>
+              {mode === 'HISTORICAL' && (
+                <button
+                  onClick={openEvidence}
+                  className="text-[9px] font-semibold tracking-widest text-wv hover:text-text-primary
+                    transition-colors px-2 py-0.5 rounded border border-wv/25 hover:border-wv/50"
+                >
+                  VIEW EVIDENCE
+                </button>
+              )}
+            </div>
+>>>>>>> 393f41c9a7f31ab646f775c7749e9d21794b7162
 
         <div className="flex-1 min-w-0 flex flex-col lg:flex-row gap-0">
           {/* ── Center: Map ── */}
