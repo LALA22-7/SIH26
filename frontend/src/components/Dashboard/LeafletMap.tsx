@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, Circle, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -101,8 +101,38 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
   }
   
   // Try to parse uncertainty geometry if the backend provided it
-  // In the stub API contract, this is provided at the predict endpoint.
-  // We'll leave the cone as a circle for now if not available.
+  // Collect unique dates for pre-caching to prevent stitches/flickering
+  const uniqueDates = useMemo(() => {
+    if (mode !== 'HISTORICAL' || !apiClassificationsData?.classifications) return [];
+    const dates = new Set<string>();
+    apiClassificationsData.classifications.forEach((c: any) => {
+      if (c.timestamp) dates.add(c.timestamp.split('T')[0]);
+    });
+    return Array.from(dates);
+  }, [mode, apiClassificationsData]);
+
+  const currentDateStr = obs?.timestamp?.split('T')[0];
+
+  // For live mode animation, cycle through last 3 days
+  const [liveDateOffset, setLiveDateOffset] = useState(0);
+  useEffect(() => {
+    if (mode !== 'LIVE') return;
+    const interval = setInterval(() => {
+      setLiveDateOffset(prev => (prev + 1) % 3);
+    }, 1500); // 1.5 seconds per frame
+    return () => clearInterval(interval);
+  }, [mode]);
+
+  const liveDates = useMemo(() => {
+    const dates = [];
+    for (let i = 2; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      dates.push(d.toISOString().split('T')[0]);
+    }
+    return dates;
+  }, []);
+
   const uncertaintyRadiusM = 85_000; 
 
   return (
@@ -128,25 +158,27 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
           className="base-tiles"
         />
 
-        {/* NASA GIBS Cloud Layer (Historical) */}
-        {mode === 'HISTORICAL' && layers.satellite && obs && (
+        {/* NASA GIBS Cloud Layer (Historical) - Precached layers with opacity crossfade */}
+        {mode === 'HISTORICAL' && layers.satellite && uniqueDates.map(dateStr => (
           <TileLayer
-            url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${obs.timestamp.split('T')[0]}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`}
-            opacity={0.65}
+            key={dateStr}
+            url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`}
+            opacity={dateStr === currentDateStr ? 0.65 : 0}
             zIndex={2}
             className="cloud-layer"
           />
-        )}
+        ))}
 
-        {/* Live fake cloud layer for visual */}
-        {mode === 'LIVE' && layers.satellite && (
+        {/* Live mode animation (last 3 days) */}
+        {mode === 'LIVE' && layers.satellite && liveDates.map((dateStr, i) => (
            <TileLayer
-             url="https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2023-06-13/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg"
-             opacity={0.65}
+             key={dateStr}
+             url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`}
+             opacity={i === liveDateOffset ? 0.65 : 0}
              zIndex={2}
-             className="cloud-layer"
+             className="cloud-layer cloud-drift"
            />
-        )}
+        ))}
 
         {mode === 'HISTORICAL' && obs && (
           <>
@@ -215,12 +247,24 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
       <style>{`
         .leaflet-container { background: #080e18 !important; }
         .base-tiles        { filter: brightness(0.65) contrast(1.1) saturate(0.75) !important; }
-        .cloud-layer       { filter: contrast(1.05) brightness(1.05) !important; }
+        .cloud-layer       { 
+          filter: contrast(1.05) brightness(1.05) !important; 
+          transition: opacity 0.4s ease-in-out !important; 
+          mix-blend-mode: screen; 
+        }
+        .cloud-drift       {
+          animation: cloud-drift 120s linear infinite;
+        }
         .leaflet-pane      { z-index: auto !important; }
         .leaflet-top, .leaflet-bottom { z-index: 10 !important; }
+        
         @keyframes pulse-ring {
           0%   { transform: scale(0.4); opacity: 0.9; }
           100% { transform: scale(2.4); opacity: 0;   }
+        }
+        @keyframes cloud-drift {
+          0%   { transform: translate3d(0px, 0px, 0); }
+          100% { transform: translate3d(-150px, 50px, 0); }
         }
       `}</style>
     </div>

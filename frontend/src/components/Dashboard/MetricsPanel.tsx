@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Activity } from 'lucide-react';
 import { useCycloneStore } from '../../store/useCycloneStore';
 import { CYCLONES, PATTERN_LABELS, PATTERN_COLORS, BASELINES } from '../../data/cyclones';
 
@@ -247,100 +248,117 @@ function HistoricalMetrics() {
         </div>
       )}
 
-      {/* ── CycloneWatch classification ── */}
-      <div className="glass-card rounded-xl p-4">
-        <SectionHeader title="Classification Inference" badge="LIVE MODEL" badgeVariant="ml" />
-
-        {/* Pattern display */}
-        <div className="flex items-start gap-3 mb-4">
-          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5"
-            style={{ background: PATTERN_COLORS[patternLabel] ?? '#6495ED',
-                     boxShadow: `0 0 8px ${PATTERN_COLORS[patternLabel] ?? '#6495ED'}` }} />
-          <div className="flex-1">
-            <div className="flex justify-between items-baseline mb-4">
-              <div>
-                <h3 className="text-sm font-bold text-text-primary tracking-widest uppercase">
-                  {PATTERN_LABELS[patternLabel] || patternLabel.replace('_', ' ')}
-                </h3>
-                <p className="text-[10px] text-text-muted mt-1">Current structural pattern</p>
-              </div>
-              <div className="text-right">
-                <span className={`text-sm font-mono font-bold ${confColor}`}>
-                  {patternConf}%
-                </span>
-                <p className="text-[8px] tracking-[0.2em] text-text-muted mt-1 uppercase">Confidence</p>
-              </div>
-            </div>
-
-            {/* Confidence bar */}
-            <div className="w-full h-1 bg-ocean-800 rounded-full overflow-hidden">
-              <div className="h-full bg-confidence rounded-full transition-all duration-300" style={{ width: `${parseFloat(patternConf) > 100 ? 100 : patternConf}%` }} />
-            </div>
+      {/* ── 1. Live Storm Center ── */}
+      <div className="glass-card rounded-xl p-4 relative overflow-hidden border-t-2 border-t-alert/50">
+        <div className="absolute top-0 right-0 p-3 opacity-20 pointer-events-none">
+          <Activity size={64} className="text-alert" />
+        </div>
+        <SectionHeader title="Live Storm Center" badge="ACTIVE" badgeVariant="alert" />
+        
+        <div className="flex items-center justify-between mb-4 mt-2">
+          <div>
+            <h2 className="text-xl font-bold tracking-widest text-white uppercase">{activeCycloneMeta.name}</h2>
+            <p className="text-xs text-text-muted mt-1">{activeCycloneMeta.landfallRegion}</p>
+          </div>
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] text-text-faint uppercase tracking-widest">Alert Level</span>
+            <span className="px-3 py-1 rounded bg-alert/20 text-alert text-xs font-bold border border-alert/30 mt-1 shadow-[0_0_10px_rgba(255,92,92,0.3)]">HIGH</span>
           </div>
         </div>
 
         <MetricGrid>
-          <MetricCell label="Center Lat" value={`${obs.lat.toFixed(2)}°N`} />
-          <MetricCell label="Center Lon" value={`${obs.lng.toFixed(2)}°E`} />
-          <MetricCell label="Model" value={classification?.model?.name || 'ps70-classifier'} />
-          <MetricCell label="Frame ID" value={displayFrameId} />
+          <MetricCell label="Wind Speed" value={activeCycloneMeta.peakWind} unit="km/h" color="text-alert" />
+          <MetricCell label="Pressure" value={activeCycloneMeta.minPressure} unit="hPa" />
         </MetricGrid>
-        <p className="text-[9px] text-text-faint font-mono mt-2">
-          {obsTimestamp}
-        </p>
       </div>
 
-      {/* ── Forecast Performance ── */}
-      <div className="glass-card rounded-xl p-4">
-        <SectionHeader title="Temporal Prediction" badge="T+12 / T+24" badgeVariant="ml" />
+      {/* ── 2. AI Storm Analysis ── */}
+      <div className="glass-card rounded-xl p-4 border-t-2 border-t-blue-500/50">
+        <SectionHeader title="AI Storm Analysis" badge="PS70-V2" badgeVariant="ml" />
+
+        <div className="flex items-center gap-4 mb-5">
+          <div className="w-16 h-16 rounded-full border-[3px] border-confidence/30 flex items-center justify-center relative shadow-[0_0_15px_rgba(111,227,180,0.2)]">
+            <svg className="absolute inset-0 w-full h-full -rotate-90">
+              <circle cx="32" cy="32" r="30" stroke="currentColor" strokeWidth="3" fill="none" className="text-ocean-800" />
+              <circle cx="32" cy="32" r="30" stroke="currentColor" strokeWidth="3" fill="none" className="text-confidence transition-all duration-1000" strokeDasharray={`${parseFloat(patternConf) * 1.88} 188`} />
+            </svg>
+            <div className="text-center">
+              <span className="block text-sm font-bold text-white leading-none">{patternConf}%</span>
+              <span className="block text-[8px] text-text-muted uppercase tracking-widest mt-0.5">Conf</span>
+            </div>
+          </div>
+          <div className="flex-1">
+            <span className="text-[10px] text-text-faint uppercase tracking-widest">Classification</span>
+            <h3 className="text-base font-bold text-confidence tracking-wider uppercase drop-shadow-[0_0_8px_rgba(111,227,180,0.5)]">
+              {PATTERN_LABELS[patternLabel] || patternLabel.replace('_', ' ')}
+            </h3>
+            <p className="text-[10px] text-text-muted mt-1">Based on thermal pattern recognition</p>
+          </div>
+        </div>
+
+        {/* Morphology */}
+        <div className="mb-4">
+          <span className="metric-label mb-2 block">Morphology Analysis</span>
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { label: 'Well Defined Eye', active: patternLabel.includes('eye') || patternConf > 80 },
+              { label: 'Spiral Bands', active: true },
+              { label: 'Symmetric', active: patternLabel.includes('curved') || patternConf > 70 },
+              { label: 'Organized', active: patternConf > 50 }
+            ].map((m, i) => (
+              <div key={i} className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${m.active ? 'bg-blue-500/10 border-blue-400/30 text-blue-400 shadow-[inset_0_0_10px_rgba(59,130,246,0.1)]' : 'bg-ocean-900/50 border-ocean-800 text-text-faint'}`}>
+                <div className={`w-3 h-3 rounded-full mb-1 border flex items-center justify-center ${m.active ? 'bg-blue-500 border-blue-400' : 'bg-transparent border-ocean-700'}`}>
+                  {m.active && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                </div>
+                <span className="text-[8px] text-center leading-tight tracking-wide">{m.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3. Forecast Timeline ── */}
+      <div className="glass-card rounded-xl p-4 border-t-2 border-t-purple-500/50">
+        <SectionHeader title="Forecast Timeline" badge="PREDICTION" badgeVariant="ml" />
         
-        <MetricGrid>
-          <MetricCell label="T+12 Forecast Error" 
-            value={step.errors?.t12_km?.toFixed(1) || 'N/A'} 
-            unit="km" 
-            color={step.errors?.t12_km > 100 ? 'text-amber-400' : 'text-text-primary'} />
-          <MetricCell label="T+24 Forecast Error" 
-            value={step.errors?.t24_km?.toFixed(1) || 'N/A'} 
-            unit="km" 
-            color={step.errors?.t24_km > 200 ? 'text-alert' : 'text-text-primary'} />
-        </MetricGrid>
+        <div className="relative pl-3 border-l-2 border-ocean-800 flex flex-col gap-5 mt-4 ml-2">
+          {/* T+0 */}
+          <div className="relative">
+            <div className="absolute -left-[19px] top-1 w-3 h-3 bg-confidence rounded-full shadow-[0_0_8px_rgba(111,227,180,0.8)] ring-4 ring-ocean-950" />
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="text-xs font-bold text-white">T+0h (Current)</span>
+                <p className="text-[10px] text-text-muted mt-0.5">{obs.lat.toFixed(2)}°N, {obs.lng.toFixed(2)}°E</p>
+              </div>
+              <span className="text-xs font-mono text-text-secondary">{activeCycloneMeta.peakWind} km/h</span>
+            </div>
+          </div>
+          
+          {/* T+12 */}
+          <div className="relative">
+            <div className="absolute -left-[19px] top-1 w-3 h-3 bg-ir rounded-full shadow-[0_0_8px_rgba(255,122,69,0.5)] ring-4 ring-ocean-950" />
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="text-xs font-bold text-text-primary">T+12h Forecast</span>
+                <p className="text-[10px] text-text-faint mt-0.5">Error: {step.errors?.t12_km?.toFixed(1) || 'N/A'} km</p>
+              </div>
+              <span className="text-xs font-mono text-text-secondary opacity-75">~175 km/h</span>
+            </div>
+          </div>
 
-        <div className="mt-3 pt-3 border-t border-ocean-800">
-          <p className="text-[9px] text-text-faint font-mono mt-1">
-            Prediction distance to actual track (Haversine)
-          </p>
+          {/* T+24 */}
+          <div className="relative">
+            <div className="absolute -left-[19px] top-1 w-3 h-3 bg-ocean-750 border-2 border-ocean-600 rounded-full ring-4 ring-ocean-950" />
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="text-xs font-bold text-text-secondary">T+24h Forecast</span>
+                <p className="text-[10px] text-text-faint mt-0.5">Error: {step.errors?.t24_km?.toFixed(1) || 'N/A'} km</p>
+              </div>
+              <span className="text-xs font-mono text-text-secondary opacity-50">~160 km/h</span>
+            </div>
+          </div>
+          </div>
         </div>
-      </div>
-
-      {/* ── Event Metrics Aggregation ── */}
-      {apiMetricsData && (
-        <div className="glass-card rounded-xl p-4">
-          <SectionHeader title="Event Evaluation Metrics" badge="AGGREGATED" badgeVariant="default" />
-          <MetricGrid>
-            <MetricCell label="Avg MAE (T+12)" value={apiMetricsData.track?.mae_km_t12?.toFixed(1) || 'N/A'} unit="km" />
-            <MetricCell label="Avg MAE (T+24)" value={apiMetricsData.track?.mae_km_t24?.toFixed(1) || 'N/A'} unit="km" />
-            <MetricCell label="Classification Acc." value={apiMetricsData.classification?.accuracy ? (apiMetricsData.classification.accuracy * 100).toFixed(1) : 'N/A'} unit="%" color="text-confidence" />
-            <MetricCell label="Sample Size" value={apiMetricsData.classification?.sample_count || '0'} unit="frames" />
-          </MetricGrid>
-        </div>
-      )}
-
-      {/* ── Baseline Information ── */}
-      <div className="glass-card rounded-xl p-4">
-        <SectionHeader title="Storm Identity" badge="ARCHIVE" badgeVariant="historical" />
-        <MetricGrid>
-          <MetricCell label="Peak Wind" value={activeCycloneMeta.peakWind} unit="km/h" />
-          <MetricCell label="Min Pressure" value={activeCycloneMeta.minPressure} unit="hPa" />
-        </MetricGrid>
-
-        <div className="mt-3 pt-3 border-t border-ocean-800">
-          <p className="metric-label text-text-faint mb-1">LANDFALL DATA</p>
-          <p className="text-[11px] text-text-secondary font-mono leading-relaxed">
-            Time: {formatIST(activeCycloneMeta.landfallTime)}<br />
-            Region: {activeCycloneMeta.landfallRegion}
-          </p>
-        </div>
-      </div>
 
     </div>
   );

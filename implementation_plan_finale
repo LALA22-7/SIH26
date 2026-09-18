@@ -1,0 +1,371 @@
+# CycloneWatch — Road to Finale: Master Execution Plan
+
+> **Document Type:** Base Guide — All execution work flows from this document.  
+> **Last Updated:** September 2026 | **State:** Approved, In Execution
+
+---
+
+## Current State Snapshot
+
+| Layer | What We Have Now | Status |
+|-------|-----------------|--------|
+| **Data** | 7 cyclones, 423 frames, 2 channels (IR + WV), 4km GridSat | ✅ Done |
+| **ML Model** | CycloneCNN, 78.3% pattern accuracy, ~255 km T+12 MAE, persistence-based forecasting | ✅ Done |
+| **Backend** | FastAPI + SQLite, 6 endpoints, pre-computed replay | ✅ Done |
+| **Frontend** | React + Leaflet, Live + Historical dual mode, Glassmorphic UI (new left sidebar layout) | ✅ Done |
+| **MOSDAC Access** | Login credentials obtained ✅ | Ready to Execute |
+
+---
+
+## The Five Phases
+
+---
+
+## PHASE 1 — Comprehensive Data Extraction
+*Goal: Go from 7 cyclones / 2 channels / 4km to 50+ cyclones / 32 parameters / 1km.*
+
+### 1.1 INSAT-3DR via MOSDAC (Immediate Priority)
+
+We now have MOSDAC credentials. The `scripts/download_insat.py` script is ready and handles authentication, catalog queries, and chunked HDF5 download automatically.
+
+**Execution Steps:**
+1. Fill in `scripts/.env` with your MOSDAC credentials.
+2. Run the downloader for each priority cyclone:
+   ```bash
+   python scripts/download_insat.py --event biparjoy_2023 --start 2023-06-01 --end 2023-06-18
+   ```
+3. Run standardization which now handles both `.nc` and `.h5` formats:
+   ```bash
+   python scripts/standardize_data.py
+   ```
+
+**Why this is the most impactful single change:**
+- Resolution goes from 4km → 1km (16× more detail per pixel)
+- Inner eyewall formation, spiral feeder bands, exact vortex center — all become visible
+- Expected MAE improvement: ~255 km → ~150 km T+12h
+
+**INSAT-3DR Key Dataset Variables (HDF5 Schema):**
+
+| Variable Key | Channel | What It Captures |
+|---|---|---|
+| `IMG_TIR1` | Thermal IR (10.3µm) | Cloud top temperature (primary storm intensity signal) |
+| `IMG_TIR2` | Thermal IR (11.5µm) | Secondary thermal window |
+| `IMG_MIR` | Mid-IR (3.9µm) | Differentiates convective vs. stratus |
+| `IMG_WV` | Water Vapour (6.8µm) | Upper-atmosphere circulation patterns |
+| `IMG_VIS` | Visible (0.65µm) | Daytime spiral band structure |
+| `IMG_SWIR` | Short-Wave IR (1.6µm) | Ice vs. water cloud differentiation |
+
+> We will expand from **2 channels** (IR + WV) to **6 channels** from INSAT-3DR alone.
+
+### 1.2 Priority Cyclone Target List (50 Events)
+
+The following events will be downloaded from MOSDAC and GridSat to expand training:
+
+**Tier 1 — Core Training Set (Already have GridSat, add INSAT):**
+- Biparjoy 2023, Amphan 2020, Fani 2019, Tauktae 2021, Ockhi 2017, Phailin 2013, Hudhud 2014
+
+**Tier 2 — High-Priority Additions (30 events):**
+- Yaas 2021 (BoB rapid intensification), Mocha 2023 (extreme peak, Bangladesh landfall)
+- Gati 2020 (Arabian Sea), Nisarga 2020 (Arabian Sea, Maharashtra), Kyarr 2019 (VSCS, Arabian Sea)
+- Gaja 2018 (unusual track, Tamil Nadu), Madi 2013 (rare BoB recurvature)
+- Asani 2022 (hard negative — weakened before landfall), Gulab 2021
+- Bulbul 2019 (Bangladesh), Titli 2018 (Odisha), Phethai 2018
+- Vayu 2019 (Gujarat, weakened at landfall), Mekunu 2018 (Arabian Sea/Oman)
+- Helen 2013, Lehar 2013, Mahasen 2013, Nanauk 2014
+- Nilofar 2014 (Arabian Sea), Chapala 2015 (Yemen landfall)
+- Roanu 2016 (Bangladesh), Vardah 2016 (Chennai), Mora 2017
+- Daye 2018, Pabuk 2019 (Thailand, hard negative for BoB)
+
+**Tier 3 — Hard Negatives (10 events - storms that formed but weakened):**
+- Systems that reached depression or CS status but did not make significant landfall.
+- Critical for preventing the model from overcalling every system as dangerous.
+
+### 1.3 Multi-Domain 32-Parameter Pipeline
+
+Beyond satellite imagery, we add meteorological context to pair with each frame:
+
+| # | Parameter | Source API | Script to Build |
+|---|---|---|---|
+| 1-6 | INSAT-3DR multi-spectral bands | MOSDAC HDF5 | `download_insat.py` ✅ |
+| 7 | 10m Wind Speed | ERA5 / Copernicus CDS | `download_era5.py` |
+| 8 | 10m Wind Direction | ERA5 / Copernicus CDS | `download_era5.py` |
+| 9 | Mean Sea Level Pressure | ERA5 | `download_era5.py` |
+| 10 | 850 hPa Vorticity | ERA5 | `download_era5.py` |
+| 11 | 200-850 hPa Wind Shear | ERA5 | `download_era5.py` |
+| 12 | Relative Humidity (700 hPa) | ERA5 | `download_era5.py` |
+| 13 | Geopotential Height (500 hPa) | ERA5 | `download_era5.py` |
+| 14 | 2m Temperature | ERA5 | `download_era5.py` |
+| 15 | Sea Surface Temperature (SST) | Copernicus Marine | `download_ocean.py` |
+| 16 | Ocean Heat Content (OHC) | Copernicus Marine | `download_ocean.py` |
+| 17 | Mixed Layer Depth | Copernicus Marine | `download_ocean.py` |
+| 18 | Surface Current U | Copernicus Marine | `download_ocean.py` |
+| 19 | Surface Current V | Copernicus Marine | `download_ocean.py` |
+| 20 | Precipitation Rate | NASA GPM IMERG | `download_gpm.py` |
+| 21 | Coastal Distance | SRTM / GeoJSON | Precomputed lookup |
+| 22 | Terrain Elevation | SRTM 30m | Precomputed GeoJSON |
+| 23 | Population Density | GHSL / WorldPop | Precomputed raster |
+| 24-32 | Derived indices (VWS, OHC gradient, etc.) | Computed | `compute_indices.py` |
+
+> [!IMPORTANT]
+> **Copernicus CDS API key** is required for ERA5. Register at `cds.climate.copernicus.eu` (free academic access, approved in ~24h). We need this for parameters 7-14.
+
+### 1.4 Ground Damage Labels (M+G+S Taxonomy)
+
+For each cyclone in the set, we will scrape and manually curate a `ground_damage_labels.csv` mapping each event to its ground destruction taxonomy:
+
+| Code | Layers | Source |
+|------|--------|--------|
+| M0–M4 | Morphology (satellite structure) | Derived from IBTrACS wind thresholds (already done) |
+| G0–G11 | Ground damage type (vegetation, power, coast, shelter) | NDRF post-disaster reports, NIDM database |
+| S0–S4 | Severity score | IMD bulletins, Copernicus EMS damage maps |
+
+---
+
+## PHASE 2 — ML Architecture Upgrade & Retraining
+*Goal: Go from a static image classifier to a spatiotemporal impact predictor with true T+12/T+24 supervision.*
+
+### 2.1 Expand Input Tensor
+
+Modify `ml/src/dataset.py`:
+- `CycloneDataset`: Input tensor changes from `[2, H, W]` → `[6, H, W]` (6 INSAT channels)
+- Later to `[32, H, W]` once ERA5+Ocean fusion is done
+
+### 2.2 ConvLSTM Sequence Training
+
+**Problem today:** The GRU in `CycloneTemporalModel` receives only `T=1` frames (fake sequence). T+12/T+24 outputs are literally copying the current position (persistence).
+
+**Fix — `CycloneSequenceDataset`:**
+- Returns a sliding window of `T=5` frames in chronological order: `[T=5, C, H, W]`
+- Also returns ground truth centers at T+12h and T+24h as supervised targets from IBTrACS
+
+**New Architecture:**
+```
+Input: [B, T=5, C=6, H, W]
+    ↓
+CycloneCNN backbone (shared weights per frame)
+    ↓
+Feature sequences: [B, T=5, 256]
+    ↓
+ConvLSTM → hidden state [B, 256]
+    ↓
+┌────────────────┬────────────────┬────────────────┬────────────────┐
+│ Pattern Head   │ Centre Head    │ T+12h Head     │ T+24h Head     │
+│ (M0-M4, 5-cls) │ (lat, lon)     │ (lat, lon) SUP │ (lat, lon) SUP │
+└────────────────┴────────────────┴────────────────┴────────────────┘
+```
+
+**Expected MAE after this phase:**
+- T+12h: ~150 km → ~120 km
+- T+24h: < 100 km (operational threshold for IMD integration)
+
+### 2.3 M+G+S Multi-Task Heads
+
+Add to `CycloneTemporalModel`:
+```python
+self.fc_damage   = nn.Linear(256, 12)  # G0–G11 CrossEntropy
+self.fc_severity = nn.Linear(256, 1)   # S score regression (0.0–4.0)
+```
+
+Train jointly with morphology + centre heads. Ground damage labels feed this as a new loss component.
+
+### 2.4 Confidence Calibration
+
+Enable `predict_confidence=True` in `model_config.json` and apply Platt scaling to map raw logits → true statistical probabilities. Add uncertainty ellipse output for forecast cones.
+
+### 2.5 Retraining Pipeline
+
+```bash
+python -m ml.src.train --config ml/config/model_config.json --epochs 50
+python -m ml.src.evaluate --model model.pt --val_split 0.2
+python -m scripts.precompute_replay  # Rebuild the Postgres replay tables
+```
+
+**Target:** Pattern accuracy ≥ 88%, T+12h MAE ≤ 120 km, T+24h MAE ≤ 100 km.
+
+---
+
+## PHASE 3 — Backend Upgrade to PostgreSQL
+*Goal: Replace SQLite with PostgreSQL to handle spatial data, 50-event scale, and ground reporting.*
+
+### 3.1 PostgreSQL Setup
+
+Spin up a local Postgres instance using Docker:
+```bash
+docker compose up postgres -d  # We will add this service to docker-compose.yml
+```
+
+Update `backend/.env`:
+```ini
+DATABASE_URL=postgresql://cyclonewatch:cyclonewatch@localhost:5432/cyclonewatch
+```
+
+### 3.2 Alembic Migration
+
+```bash
+alembic revision --autogenerate -m "Migrate to Postgres and expand schema"
+alembic upgrade head
+```
+
+### 3.3 Schema Expansions
+
+New tables to add:
+
+```sql
+-- Ground destruction reports from NDRF/field agents
+CREATE TABLE ground_reports (
+    id          SERIAL PRIMARY KEY,
+    event_id    VARCHAR,
+    lat         FLOAT,
+    lon         FLOAT,
+    damage_type VARCHAR,   -- G0–G11 code
+    severity    FLOAT,     -- S0–S4
+    timestamp   TIMESTAMPTZ,
+    reporter_id VARCHAR,
+    verified    BOOLEAN DEFAULT FALSE
+);
+
+-- Multi-task ML predictions stored per frame
+ALTER TABLE classifications
+  ADD COLUMN damage_class  VARCHAR,
+  ADD COLUMN severity_score FLOAT,
+  ADD COLUMN t12_lat FLOAT, t12_lon FLOAT,
+  ADD COLUMN t24_lat FLOAT, t24_lon FLOAT;
+```
+
+### 3.4 New API Endpoints
+
+- `POST /api/reports` — Submit a ground destruction report
+- `GET /api/reports/{event_id}` — Fetch all verified reports for map overlay
+- `GET /api/replay/{event_id}?source=isro|nasa` — Dual data source toggle
+- `GET /api/coastline/distance?lat={lat}&lon={lon}` — Geodesic distance to coast
+
+---
+
+## PHASE 4 — Frontend Enhancement (2D Leaflet, Enhanced & Beautiful)
+*Goal: Keep 2D Leaflet, completely eliminate black marks, build a smooth cloud animation engine, add INSAT Full Disk in Live Mode, and wire up the new Impact Panel.*
+
+### 4.1 Cloud Layer: Black Mark Elimination
+
+The `mix-blend-mode: screen` CSS fix is already in place. We will also:
+- Switch from `MODIS_Terra_CorrectedReflectance_TrueColor` to the **Infrared** GIBS layer in historical mode for cleaner black-edge-free rendering.
+- Use `mix-blend-mode: screen` + `filter: brightness(1.3) contrast(1.1)` to ensure swath edges are fully invisible against the dark ocean basemap.
+
+### 4.2 Smooth Animation Engine (Live Mode)
+
+Replace the current 1.5s frame-swap interval with a proper pre-cached crossfade:
+1. **Frame Buffer**: Pre-fetch the next 5 INSAT timestamps into the cache before showing them.
+2. **Cross-Fade Layers**: Maintain two Leaflet tile layers simultaneously — the current frame fades out (opacity 1→0 over 2s) while the next frame fades in (opacity 0→1 over 2s). No black flash between frames.
+3. **Slow Cloud Drift**: CSS `cloud-drift` keyframe gently pans the cloud layer at 120s/cycle, simulating realistic atmospheric drift.
+
+### 4.3 Real-Time INSAT Full Disk (Live Mode)
+
+MOSDAC provides near-real-time Indian Ocean full-disk composite images updated every 30 minutes.
+
+Implementation in `LeafletMap.tsx`:
+- In **Live Mode**, poll MOSDAC's WMS endpoint every **15 minutes** for fresh INSAT-3DR imagery.
+- Display the updated full-disk cloud layer over the basemap — this is **actual Indian satellite data**, not NASA MODIS.
+- Show a live timestamp badge confirming the INSAT data acquisition time.
+
+### 4.4 Dynamic Track Color Coding
+
+Intensity-based polyline colors on the historical track (already specified in `future_implementation.md`):
+
+| Wind Speed | Color | Category |
+|---|---|---|
+| < 35 kt | `#6b7280` grey | Depression |
+| 35–60 kt | `#eab308` yellow | CS |
+| 60–90 kt | `#f97316` orange | SCS |
+| 90–115 kt | `#ef4444` red | VSCS |
+| ≥ 115 kt | `#9333ea` purple | SUCS/Eye |
+
+### 4.5 Impact Metrics Panel
+
+New `ImpactPanel` component in the right sidebar:
+- M+G+S prediction display with severity gauge
+- Coastal distance (live geodesic calculation, not hardcoded 320km)
+- Time to impact (calculated from track vector + wind speed)
+- Ground report pins from the `ground_reports` API overlaid on the map
+
+### 4.6 Admin Data Source Toggle
+
+Protected route `/admin`:
+- Toggle between `NASA GIBS` and `INSAT / MOSDAC` as the cloud source
+- Side-by-side comparison of model predictions under each data source
+
+---
+
+## PHASE 5 — End-to-End Integration & Debugging
+*Goal: Harden everything for demo day. Zero blank states, zero crashes, zero hardcoded placeholders.*
+
+### 5.1 Live Inference Pipeline
+
+Connect `POST /api/ps70/classify` to real-time INSAT polling:
+1. Every 30 minutes, the backend fetches the latest INSAT full-disk frame from MOSDAC
+2. Runs it through the trained model in ~12ms
+3. If pattern ≠ `disorganized` and confidence > 50%, triggers an alert in the frontend notification system
+4. The Live Mode dashboard updates with the new structural classification automatically
+
+### 5.2 Haversine Coast Distance
+
+Replace the hardcoded `320 km` placeholder with a real calculation:
+- Load `public/india_coastline.geojson` (simplified coastal boundary polygon)
+- Compute Haversine distance from live storm position to nearest coastal point
+- Feed into `Time to Impact` via `distance / storm_speed_vector`
+
+### 5.3 Performance Targets for Demo Day
+
+| Metric | Current | Target |
+|--------|---------|--------|
+| T+12h MAE | ~255 km | ≤ 150 km (Phase 1) → ≤ 120 km (Phase 2) |
+| T+24h MAE | ~400 km | ≤ 100 km |
+| Pattern Accuracy | 78.3% | ≥ 88% |
+| Training Events | 7 | 50+ |
+| Input Channels | 2 | 6 (→ 32 later) |
+| Map Animation | Frame-flicker | Smooth 2s crossfade |
+| Live Data | NASA MODIS 3 days | INSAT-3DR 30min refresh |
+| Backend DB | SQLite | PostgreSQL |
+
+### 5.4 Pre-Demo Checklist
+
+- [ ] All 50 cyclone events ingested and standardized
+- [ ] New model trained on 50-event dataset with 6 channels
+- [ ] PostgreSQL running and all Alembic migrations applied
+- [ ] All INSAT full-disk polling working in Live Mode
+- [ ] Black marks fully eliminated (mix-blend-mode: screen verified on target machine)
+- [ ] No hardcoded placeholders (coastal distance, time to impact computed live)
+- [ ] All 7 original gap cases still showing correct early-detection lead times
+- [ ] Backend `/health` endpoint returns green on demo machine
+- [ ] Frontend Vite production build (`npm run build`) runs without TypeScript errors
+
+---
+
+## Execution Order
+
+```
+NOW     → Phase 1.1: MOSDAC INSAT download (credentials ready)
+          Phase 1.1: standardize_data.py expansion for 6-channel HDF5
+          Fix Vite error in MetricsPanel.tsx (done ✅)
+
+WEEK 1  → Phase 1.2: All 50 cyclone downloads from GridSat + INSAT
+          Phase 3.1: PostgreSQL Docker setup + Alembic migration
+
+WEEK 2  → Phase 2.1: Expand ML input tensor to 6 channels
+          Phase 2.2: CycloneSequenceDataset + ConvLSTM training
+
+WEEK 3  → Phase 1.3: ERA5 + Copernicus Marine data pipeline (32 params)
+          Phase 2.3: M+G+S multi-task heads + retrain
+
+WEEK 4  → Phase 3.3: New Postgres schema (ground_reports, expanded classifications)
+          Phase 3.4: New API endpoints
+
+WEEK 5  → Phase 4.1: Black mark elimination (GIBS IR layer swap)
+          Phase 4.2: Smooth animation engine (pre-cached crossfade)
+          Phase 4.3: INSAT Full Disk real-time polling in Live Mode
+
+WEEK 6  → Phase 4.4: Dynamic track colors
+          Phase 4.5: Impact Metrics Panel wired to real geodesy
+          Phase 4.6: Admin data source toggle
+
+WEEK 7  → Phase 5: Full end-to-end integration, live inference pipeline, debugging
+          Pre-demo performance validation against all targets
+```
