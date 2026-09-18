@@ -128,3 +128,6 @@ alembic/__pycache__/
 # data/metadata.csv
 # data/normalized/normalized_manifest.csv
 data/raw/download_manifest.csv
+
+# ── Nested repositories ───────────────────────────────
+SIH26_ps77/
