@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CYCLONES } from '../../data/cyclones';
-import { ChevronDown, ChevronUp, Wind, Gauge, MapPin, Calendar, Anchor, AlertTriangle, Lightbulb } from 'lucide-react';
+import { ChevronDown, ChevronUp, Wind, Gauge, MapPin, Calendar, AlertTriangle, Lightbulb } from 'lucide-react';
 
 // Real-world destruction data for each cyclone
 const DESTRUCTION_DATA: Record<string, { deaths: string; damage: string; affected: string; summary: string }> = {

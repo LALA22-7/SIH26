@@ -8,7 +8,7 @@ import { EvidenceDrawer } from './components/Dashboard/EvidenceDrawer';
 import { HomePage } from './components/Pages/HomePage';
 import { ArchitecturePage } from './components/Pages/ArchitecturePage';
 import { ReportsPage } from './components/Pages/ReportsPage';
-import { User, Github, Info, LogIn } from 'lucide-react';
+import { User, ExternalLink, Info, LogIn } from 'lucide-react';
 
 function App() {
   const {
@@ -114,7 +114,7 @@ function App() {
               {userMenuOpen && (
                 <div className="absolute top-11 right-0 w-48 glass-chrome rounded-xl p-1.5 shadow-glass z-50 border border-white/10">
                   {[
-                    { icon: Github, label: 'Source Code', action: () => window.open('https://github.com/LALA22-7/SIH26', '_blank') },
+                    { icon: ExternalLink, label: 'Source Code', action: () => window.open('https://github.com/LALA22-7/SIH26', '_blank') },
                     { icon: Info, label: 'About CycloneWatch', action: () => { useCycloneStore.getState().setActivePage('home'); setUserMenuOpen(false); } },
                     { icon: LogIn, label: 'Login', action: () => setUserMenuOpen(false) },
                   ].map((item, i) => (
