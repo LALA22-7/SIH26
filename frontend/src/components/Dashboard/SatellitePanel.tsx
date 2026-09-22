@@ -265,7 +265,7 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
                {CYCLONES.map(c => (
                   <div 
                     key={c.id} 
-                    onClick={() => useCycloneStore.getState().setActiveEvent(c.id)} 
+                    onClick={() => useCycloneStore.getState().setActiveCyclone(c.id)} 
                     className={`px-3 py-2 text-xs hover:bg-white/10 cursor-pointer rounded-lg flex justify-between ${c.id === activeEventId ? 'text-blue-400 bg-white/5' : ''}`}
                   >
                      <span>{c.name} {c.year}</span>
