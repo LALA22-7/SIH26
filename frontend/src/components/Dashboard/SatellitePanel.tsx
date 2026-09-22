@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Plus, Minus, Radio, MoreHorizontal,
   Navigation, Maximize2, Database, Clock,
-  Eye, Wind, Waves, Map, GitBranch, Triangle,
+  Eye, Wind, Waves, Map, GitBranch, Triangle, Layers, ChevronDown
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LeafletMap } from './LeafletMap';
@@ -62,12 +62,15 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
 
   // Popover states
   const [dotMenuOpen, setDotMenuOpen] = useState(false);
+  const [layersPanelOpen, setLayersPanelOpen] = useState(false);
   const dotRef    = useRef<HTMLDivElement>(null);
+  const layersRef = useRef<HTMLDivElement>(null);
 
   // Close popovers on outside click
   useEffect(() => {
     function handle(e: MouseEvent) {
       if (dotRef.current  && !dotRef.current.contains(e.target as Node))  setDotMenuOpen(false);
+      if (layersRef.current && !layersRef.current.contains(e.target as Node)) setLayersPanelOpen(false);
     }
     document.addEventListener('mousedown', handle);
     return () => document.removeEventListener('mousedown', handle);
@@ -134,61 +137,81 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
         </div>
       </div>
 
-      {/* ── Layer panel (Permanent floating widget) ── */}
-      <div className="absolute top-[88px] left-4 z-20 w-52">
-        <div className="glass-chrome rounded-xl p-3 shadow-glass border border-white/10 bg-ocean-950/40 backdrop-blur-md">
-          {/* Header */}
-          <div className="metric-label text-text-primary mb-3 pb-2 border-b border-ocean-800">
-            MAP LAYERS
-          </div>
+      {/* ── Map Layers Toggle Button & Panel ── */}
+      <div className="absolute top-[88px] left-4 z-20" ref={layersRef}>
+        <button
+          onClick={() => setLayersPanelOpen(!layersPanelOpen)}
+          className={`w-8 h-8 glass-chrome rounded-lg flex items-center justify-center transition-colors shadow-glass ${
+            layersPanelOpen ? 'text-confidence' : 'text-text-muted hover:text-text-primary'
+          }`}
+          title="Map Layers"
+        >
+          <Layers size={14} />
+        </button>
 
-          {/* Individual toggles */}
-          <div className="flex flex-col gap-1">
-            {LAYER_DEFS.map((def) => {
-              let available = def.alwaysAvailable || mode === 'HISTORICAL';
-              if (mode === 'HISTORICAL' && (def.key === 'wind' || def.key === 'ocean')) {
-                available = false;
-              }
-              return (
-                <button
-                  key={def.key}
-                  onClick={() => available && toggleLayer(def.key)}
-                  disabled={!available}
-                  className={`flex items-center justify-between px-2 py-1.5 rounded-lg transition-colors
-                    ${available ? 'hover:bg-ocean-800/80 cursor-pointer' : 'opacity-35 cursor-not-allowed'}
-                  `}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`transition-colors ${layers[def.key] && available ? 'text-blue-400' : 'text-text-secondary'}`}>{def.icon}</span>
-                    <span className={`text-[11px] font-medium ${layers[def.key] && available ? 'text-white' : 'text-text-primary'}`}>{def.label}</span>
-                  </div>
-                  <div className={`w-7 h-4 rounded-full relative transition-colors border ${
-                    layers[def.key] && available ? 'bg-blue-500/20 border-blue-500/50' : 'bg-ocean-800 border-ocean-700'
-                  }`}>
-                    <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white transition-all ${
-                      layers[def.key] && available ? 'left-[15px] shadow-[0_0_5px_rgba(255,255,255,0.8)]' : 'left-1 opacity-50'
-                    }`} />
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+        <AnimatePresence>
+          {layersPanelOpen && (
+            <motion.div 
+              initial={{ opacity: 0, x: -6, scale: 0.96 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: -6, scale: 0.96 }}
+              transition={{ duration: 0.15 }}
+              className="absolute top-0 left-10 w-52 glass-chrome rounded-xl p-3 shadow-glass border border-white/10 bg-ocean-950/40 backdrop-blur-md"
+            >
+              {/* Header */}
+              <div className="metric-label text-text-primary mb-3 pb-2 border-b border-ocean-800">
+                MAP LAYERS
+              </div>
 
-          {/* Quick presets */}
-          <div className="grid grid-cols-3 gap-1 mt-3 pt-3 border-t border-ocean-800">
-            {(['CYCLONE_VIEW', 'TRAJECTORY_ONLY', 'CLEAN_MAP'] as Preset[]).map(p => (
-              <button
-                key={p}
-                onClick={() => applyPreset(p)}
-                className="text-[8px] font-bold tracking-wide py-1.5 px-1 rounded-md
-                  bg-ocean-900 text-text-primary hover:bg-ocean-800 border border-white/5
-                  transition-colors leading-tight text-center"
-              >
-                {p === 'CYCLONE_VIEW' ? 'ALL' : p === 'TRAJECTORY_ONLY' ? 'TRACK' : 'NONE'}
-              </button>
-            ))}
-          </div>
-        </div>
+              {/* Individual toggles */}
+              <div className="flex flex-col gap-1">
+                {LAYER_DEFS.map((def) => {
+                  let available = def.alwaysAvailable || mode === 'HISTORICAL';
+                  if (mode === 'HISTORICAL' && (def.key === 'wind' || def.key === 'ocean')) {
+                    available = false;
+                  }
+                  return (
+                    <button
+                      key={def.key}
+                      onClick={() => available && toggleLayer(def.key)}
+                      disabled={!available}
+                      className={`flex items-center justify-between px-2 py-1.5 rounded-lg transition-colors
+                        ${available ? 'hover:bg-ocean-800/80 cursor-pointer' : 'opacity-35 cursor-not-allowed'}
+                      `}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`transition-colors ${layers[def.key] && available ? 'text-blue-400' : 'text-text-secondary'}`}>{def.icon}</span>
+                        <span className={`text-[11px] font-medium ${layers[def.key] && available ? 'text-white' : 'text-text-primary'}`}>{def.label}</span>
+                      </div>
+                      <div className={`w-7 h-4 rounded-full relative transition-colors border ${
+                        layers[def.key] && available ? 'bg-blue-500/20 border-blue-500/50' : 'bg-ocean-800 border-ocean-700'
+                      }`}>
+                        <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white transition-all ${
+                          layers[def.key] && available ? 'left-[15px] shadow-[0_0_5px_rgba(255,255,255,0.8)]' : 'left-1 opacity-50'
+                        }`} />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Quick presets */}
+              <div className="grid grid-cols-3 gap-1 mt-3 pt-3 border-t border-ocean-800">
+                {(['CYCLONE_VIEW', 'TRAJECTORY_ONLY', 'CLEAN_MAP'] as Preset[]).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => applyPreset(p)}
+                    className="text-[8px] font-bold tracking-wide py-1.5 px-1 rounded-md
+                      bg-ocean-900 text-text-primary hover:bg-ocean-800 border border-white/5
+                      transition-colors leading-tight text-center"
+                  >
+                    {p === 'CYCLONE_VIEW' ? 'ALL' : p === 'TRAJECTORY_ONLY' ? 'TRACK' : 'NONE'}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ── Three-dot menu — bottom-right ── */}
@@ -242,7 +265,7 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
       {/* ── Status badges — top-centre ── */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex gap-2 pointer-events-none">
         {isLive ? (
-          <div className={`glass-pill flex items-center gap-2 px-3 py-1.5 rounded-full ${
+          <div className={`glass-pill flex items-center gap-2 px-3 py-1.5 rounded-full pointer-events-auto ${
             liveData.status === 'LIVE'
               ? 'border-green-500/40 text-green-400'
               : 'border-amber-500/40 text-amber-400'
@@ -258,8 +281,9 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
             </span>
           </div>
         ) : (
-          <div className="glass-pill flex items-center gap-2 px-3 py-1.5 rounded-full text-text-primary group relative cursor-pointer hover:bg-white/5 transition-colors">
+          <div className="glass-pill flex items-center gap-2 px-3 py-1.5 rounded-full text-text-primary group relative cursor-pointer hover:bg-white/5 transition-colors pointer-events-auto">
             <span className="metric-label">HISTORICAL ARCHIVE · {activeCycloneMeta.name} {activeCycloneMeta.year}</span>
+            <ChevronDown size={12} className="opacity-50" />
             {/* Dropdown for historical cyclone selection */}
             <div className="hidden group-hover:block absolute top-full mt-2 left-1/2 -translate-x-1/2 w-56 glass-chrome rounded-xl p-1.5 shadow-glass z-50">
                {CYCLONES.map(c => (
@@ -290,7 +314,7 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
           )}
         </div>
 
-        <div className="glass-pill px-3 py-1.5 rounded-full">
+        <div className="glass-pill px-3 py-1.5 rounded-full pointer-events-auto">
           <span className="metric-label text-text-secondary">SRC: NASA GIBS</span>
         </div>
       </div>
