@@ -12,10 +12,10 @@ class Settings(BaseSettings):
 
     # ── Database ─────────────────────────────────────────────
     database_url: str = (
-        "sqlite+aiosqlite:///cyclonewatch.db"
+        "postgresql+asyncpg://cyclone:cyclone_secret@localhost:5432/cyclonewatch"
     )
     database_sync_url: str = (
-        "sqlite:///cyclonewatch.db"
+        "postgresql+psycopg2://cyclone:cyclone_secret@localhost:5432/cyclonewatch"
     )
 
     # ── Application ──────────────────────────────────────────
