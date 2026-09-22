@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
 import { useCycloneStore } from './store/useCycloneStore';
-import { IntroAnimation } from './components/IntroAnimation';
 import { SideNav } from './components/Navigation/SideNav';
 import { SatellitePanel } from './components/Dashboard/SatellitePanel';
 import { MetricsPanel } from './components/Dashboard/MetricsPanel';
@@ -8,23 +7,29 @@ import { EvidenceDrawer } from './components/Dashboard/EvidenceDrawer';
 import { HomePage } from './components/Pages/HomePage';
 import { ArchitecturePage } from './components/Pages/ArchitecturePage';
 import { ReportsPage } from './components/Pages/ReportsPage';
-import { User, ExternalLink, Info, LogIn } from 'lucide-react';
+import { User, ExternalLink, Info, LogIn, ChevronDown } from 'lucide-react';
+import { CYCLONES } from './data/cyclones';
 
 function App() {
   const {
-    introComplete, isPlaying, timelineIndex,
+    isPlaying, timelineIndex,
     setTimelineIndex, mode, activeEventId, activePage,
     fetchLiveData, evidenceOpen, openEvidence, closeEvidence,
   } = useCycloneStore();
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [cycloneMenuOpen, setCycloneMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const cycloneMenuRef = useRef<HTMLDivElement>(null);
 
   // Close user menu on outside click
   useEffect(() => {
     function handle(e: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
+      }
+      if (cycloneMenuRef.current && !cycloneMenuRef.current.contains(e.target as Node)) {
+        setCycloneMenuOpen(false);
       }
     }
     document.addEventListener('mousedown', handle);
@@ -61,14 +66,10 @@ function App() {
   return (
     <div className="w-full h-screen bg-[#040814] text-text-primary overflow-hidden flex flex-col p-2 sm:p-3 lg:p-4">
 
-      {/* Intro splash */}
-      {!introComplete && <IntroAnimation />}
-
       {/* Main workspace */}
       <main
-        className="flex-1 min-h-0 w-full max-w-[1920px] mx-auto rounded-[1.5rem] border border-white/5 flex overflow-hidden transition-opacity duration-700 shadow-glass"
+        className="flex-1 min-h-0 w-full max-w-[1920px] mx-auto rounded-[1.5rem] border border-white/5 flex overflow-hidden shadow-glass"
         style={{
-          opacity: introComplete ? 1 : 0,
           background: 'rgba(11, 17, 32, 0.65)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)'
@@ -102,6 +103,34 @@ function App() {
               </div>
             )}
 
+            <div className="flex items-center gap-4">
+              {/* Cyclone selection dropdown (Historical Only) */}
+              {mode === 'HISTORICAL' && (
+                <div className="relative" ref={cycloneMenuRef}>
+                  <button
+                    onClick={() => setCycloneMenuOpen(v => !v)}
+                    className="h-9 px-3 rounded-xl glass-chrome flex items-center justify-center gap-2 text-text-muted hover:text-text-primary transition-all hover:bg-ocean-800 border border-white/5"
+                  >
+                    <span className="text-xs font-semibold">SELECT CYCLONE</span>
+                    <ChevronDown size={14} />
+                  </button>
+
+                  {cycloneMenuOpen && (
+                    <div className="absolute top-11 right-0 w-56 glass-chrome rounded-xl p-1.5 shadow-glass z-50 border border-white/10">
+                      {CYCLONES.map(c => (
+                        <div 
+                          key={c.id} 
+                          onClick={() => { useCycloneStore.getState().setActiveCyclone(c.id); setCycloneMenuOpen(false); }} 
+                          className={`px-3 py-2 text-xs hover:bg-white/10 cursor-pointer rounded-lg flex justify-between transition-colors ${c.id === activeEventId ? 'text-blue-400 bg-white/5' : 'text-text-muted hover:text-text-primary'}`}
+                        >
+                           <span>{c.name} {c.year}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
             {/* User dropdown */}
             <div className="relative" ref={userMenuRef}>
               <button
@@ -131,6 +160,7 @@ function App() {
                   ))}
                 </div>
               )}
+            </div>
             </div>
           </div>
 

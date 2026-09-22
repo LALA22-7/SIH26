@@ -281,21 +281,8 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
             </span>
           </div>
         ) : (
-          <div className="glass-pill flex items-center gap-2 px-3 py-1.5 rounded-full text-text-primary group relative cursor-pointer hover:bg-white/5 transition-colors pointer-events-auto">
+          <div className="glass-pill flex items-center gap-2 px-3 py-1.5 rounded-full text-text-primary pointer-events-auto">
             <span className="metric-label">HISTORICAL ARCHIVE · {activeCycloneMeta.name} {activeCycloneMeta.year}</span>
-            <ChevronDown size={12} className="opacity-50" />
-            {/* Dropdown for historical cyclone selection */}
-            <div className="hidden group-hover:block absolute top-full mt-2 left-1/2 -translate-x-1/2 w-56 glass-chrome rounded-xl p-1.5 shadow-glass z-50">
-               {CYCLONES.map(c => (
-                  <div 
-                    key={c.id} 
-                    onClick={() => useCycloneStore.getState().setActiveCyclone(c.id)} 
-                    className={`px-3 py-2 text-xs hover:bg-white/10 cursor-pointer rounded-lg flex justify-between ${c.id === activeEventId ? 'text-blue-400 bg-white/5' : ''}`}
-                  >
-                     <span>{c.name} {c.year}</span>
-                  </div>
-               ))}
-            </div>
           </div>
         )}
 
@@ -303,13 +290,13 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
           <span className="font-mono text-[10px] text-text-primary tracking-widest">
             {isLive
               ? (liveData.lastUpdated
-                  ? `FRAME FETCHED: ${formatIST(liveData.lastUpdated)}`
+                  ? `FRAME CAPTURED: ${formatIST(liveData.lastUpdated)}`
                   : 'FETCHING FRAME...')
               : (obs ? formatIST(obs.timestamp) : '...')}
           </span>
           {isLive && liveData.lastUpdated && (
              <span className="font-mono text-[9px] text-text-muted tracking-widest mt-0.5">
-               NEXT UPCOMING: {formatIST(new Date(new Date(liveData.lastUpdated).getTime() + 3*60*60*1000).toISOString())}
+               NEXT UPCOMING: {formatIST(new Date(new Date(liveData.lastUpdated).getTime() + 1*60*60*1000).toISOString())}
              </span>
           )}
         </div>

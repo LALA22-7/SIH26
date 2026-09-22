@@ -75,7 +75,7 @@ export const useCycloneStore = create<CycloneState>((set, get) => ({
   activeEventId: 'biparjoy_2023', // Default
   timelineIndex: 0,
   isPlaying:     false,
-  introComplete: false,
+  introComplete: true,
   liveData:      DEFAULT_LIVE_DATA,
   evidenceOpen:  false,
   
@@ -202,7 +202,7 @@ export const useCycloneStore = create<CycloneState>((set, get) => ({
       set({
         liveData: {
           status:      'LIVE',
-          lastUpdated: new Date().toISOString(),
+          lastUpdated: weather.current?.time ? new Date(weather.current.time).toISOString() : new Date().toISOString(),
           atmosphere: {
             windSpeed:     weather.current?.wind_speed_10m     ?? null,
             windDirection: weather.current?.wind_direction_10m ?? null,
