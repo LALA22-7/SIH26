@@ -21,8 +21,12 @@ export interface LiveData {
   cyclone: { active: boolean };
 }
 
+export type AppPage = 'home' | 'live' | 'historical' | 'architecture' | 'reports';
+
 interface CycloneState {
   mode:            'LIVE' | 'HISTORICAL';
+  activePage:      AppPage;
+  sidebarCollapsed: boolean;
   liveBasin:       'Bay of Bengal' | 'Arabian Sea';
   activeEventId:   string;
   timelineIndex:   number;
@@ -38,6 +42,8 @@ interface CycloneState {
   isLoadingData: boolean;
 
   // Actions
+  setActivePage:     (page: AppPage) => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
   setMode:           (mode: 'LIVE' | 'HISTORICAL') => void;
   setLiveBasin:      (basin: 'Bay of Bengal' | 'Arabian Sea') => void;
   setActiveCyclone:  (cycloneId: string) => void;
@@ -63,6 +69,8 @@ const DEFAULT_LIVE_DATA: LiveData = {
 
 export const useCycloneStore = create<CycloneState>((set, get) => ({
   mode:          'LIVE',
+  activePage:    'home',
+  sidebarCollapsed: false,
   liveBasin:     'Bay of Bengal',
   activeEventId: 'biparjoy_2023', // Default
   timelineIndex: 0,
@@ -75,6 +83,9 @@ export const useCycloneStore = create<CycloneState>((set, get) => ({
   apiMetricsData: null,
   apiClassificationsData: null,
   isLoadingData: false,
+
+  setActivePage: (page) => set({ activePage: page }),
+  setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
 
   setMode: (mode) => {
     set({ mode });

@@ -1,25 +1,42 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useCycloneStore } from './store/useCycloneStore';
 import { IntroAnimation } from './components/IntroAnimation';
 import { SideNav } from './components/Navigation/SideNav';
 import { SatellitePanel } from './components/Dashboard/SatellitePanel';
 import { MetricsPanel } from './components/Dashboard/MetricsPanel';
 import { EvidenceDrawer } from './components/Dashboard/EvidenceDrawer';
-import { Bell, User } from 'lucide-react';
+import { HomePage } from './components/Pages/HomePage';
+import { ArchitecturePage } from './components/Pages/ArchitecturePage';
+import { ReportsPage } from './components/Pages/ReportsPage';
+import { User, Github, Info, LogIn } from 'lucide-react';
 
 function App() {
   const {
     introComplete, isPlaying, timelineIndex,
-    setTimelineIndex, mode, activeEventId,
+    setTimelineIndex, mode, activeEventId, activePage,
     fetchLiveData, evidenceOpen, openEvidence, closeEvidence,
   } = useCycloneStore();
+
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close user menu on outside click
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, []);
 
   // Fetch event data when active event changes
   useEffect(() => {
     if (mode === 'HISTORICAL') {
       useCycloneStore.getState().fetchEventData(activeEventId);
     }
-  }, [mode, activeEventId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mode, activeEventId]);
 
   // Initial live data fetch
   useEffect(() => {
@@ -38,27 +55,14 @@ function App() {
     return () => clearInterval(id);
   }, [isPlaying, timelineIndex, mode, setTimelineIndex]);
 
+  // Should we show the map+metrics layout?
+  const isMapPage = activePage === 'live' || activePage === 'historical';
+
   return (
-    <div className="w-full h-screen bg-[#040814] text-text-primary overflow-hidden flex flex-col p-3 lg:p-4">
+    <div className="w-full h-screen bg-[#040814] text-text-primary overflow-hidden flex flex-col p-2 sm:p-3 lg:p-4">
 
       {/* Intro splash */}
       {!introComplete && <IntroAnimation />}
-
-      {/* Top utility bar (Account/Alerts) */}
-      <header
-        className="flex justify-end items-center w-full px-2 mb-3 transition-opacity duration-700 pointer-events-none"
-        style={{ opacity: introComplete ? 1 : 0 }}
-      >
-        <div className="flex items-center gap-3 pointer-events-auto">
-          <button className="h-9 px-4 rounded-xl glass-chrome flex items-center gap-2 text-text-muted hover:text-text-primary transition-all hover:bg-ocean-800">
-            <Bell size={14} fill="currentColor" className="text-alert drop-shadow-[0_0_8px_rgba(255,92,92,0.6)]" />
-            <span className="text-[10px] font-bold tracking-[0.14em] text-white">2 ALERTS</span>
-          </button>
-          <button className="w-9 h-9 rounded-xl glass-chrome flex items-center justify-center text-text-muted hover:text-text-primary transition-all hover:bg-ocean-800">
-            <User size={16} />
-          </button>
-        </div>
-      </header>
 
       {/* Main workspace */}
       <main
@@ -73,45 +77,87 @@ function App() {
         {/* Left Navigation */}
         <SideNav />
 
-        <div className="flex-1 min-w-0 flex flex-col lg:flex-row gap-0">
+        {/* Content area */}
+        <div className="flex-1 min-w-0 flex flex-col relative">
 
-          {/* ── Left: Map (70%) ── */}
-          <div className="flex-none h-[50vh] lg:h-auto lg:flex-[0.70] min-h-0 flex flex-col border-b lg:border-b-0 lg:border-r border-ocean-800">
-            {/* Section label */}
-            <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-b border-ocean-800/50">
-              <div className="flex items-center gap-2">
+          {/* Top bar — user menu (shown on all pages) */}
+          <div className="flex-shrink-0 flex justify-end items-center px-4 py-2 border-b border-ocean-800/50">
+            {isMapPage && (
+              <div className="flex items-center gap-2 mr-auto">
                 {mode === 'LIVE' && (
                   <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                 )}
-
                 <span className="metric-label text-text-primary font-semibold">
                   {mode === 'LIVE' ? 'LIVE SATELLITE IMAGING' : 'HISTORICAL SATELLITE ARCHIVE'}
                 </span>
+                {mode === 'HISTORICAL' && (
+                  <button
+                    onClick={openEvidence}
+                    className="text-[9px] font-semibold tracking-widest text-wv hover:text-text-primary
+                      transition-colors px-2 py-0.5 rounded border border-wv/25 hover:border-wv/50 ml-3"
+                  >
+                    VIEW EVIDENCE
+                  </button>
+                )}
               </div>
-              {mode === 'HISTORICAL' && (
-                <button
-                  onClick={openEvidence}
-                  className="text-[9px] font-semibold tracking-widest text-wv hover:text-text-primary
-                    transition-colors px-2 py-0.5 rounded border border-wv/25 hover:border-wv/50"
-                >
-                  VIEW EVIDENCE
-                </button>
+            )}
+
+            {/* User dropdown */}
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen(v => !v)}
+                className="w-9 h-9 rounded-xl glass-chrome flex items-center justify-center text-text-muted hover:text-text-primary transition-all hover:bg-ocean-800"
+              >
+                <User size={16} />
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute top-11 right-0 w-48 glass-chrome rounded-xl p-1.5 shadow-glass z-50 border border-white/10">
+                  {[
+                    { icon: Github, label: 'Source Code', action: () => window.open('https://github.com/LALA22-7/SIH26', '_blank') },
+                    { icon: Info, label: 'About CycloneWatch', action: () => { useCycloneStore.getState().setActivePage('home'); setUserMenuOpen(false); } },
+                    { icon: LogIn, label: 'Login', action: () => setUserMenuOpen(false) },
+                  ].map((item, i) => (
+                    <button
+                      key={i}
+                      onClick={item.action}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg
+                        text-text-muted hover:text-text-primary hover:bg-ocean-850
+                        transition-colors text-left"
+                    >
+                      <item.icon size={14} />
+                      <span className="text-[11px]">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
-
-            {/* Map container */}
-            <div className="flex-1 min-h-0 relative">
-              <SatellitePanel onCentreClick={openEvidence} />
-            </div>
           </div>
 
-          {/* ── Right: Widgets ── */}
-          <div className="flex-none lg:w-[420px] xl:w-[480px] min-h-0 flex flex-col bg-ocean-950/20">
-            <div className="flex-1 min-h-0 overflow-y-auto p-4 custom-scrollbar">
-              <MetricsPanel />
-            </div>
-          </div>
+          {/* Page content */}
+          <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
+            {activePage === 'home' && <HomePage />}
+            {activePage === 'architecture' && <ArchitecturePage />}
+            {activePage === 'reports' && <ReportsPage />}
 
+            {isMapPage && (
+              <>
+                {/* Map area */}
+                <div className="flex-1 min-h-0 min-w-0 flex flex-col border-b lg:border-b-0 lg:border-r border-ocean-800">
+                  <div className="flex-1 min-h-0 relative">
+                    <SatellitePanel onCentreClick={openEvidence} />
+                  </div>
+                </div>
+
+                {/* Right metrics panel */}
+                <div className="flex-none h-[40vh] lg:h-auto lg:w-[380px] xl:w-[420px] min-h-0 flex flex-col bg-ocean-950/20">
+                  <div className="flex-1 min-h-0 overflow-y-auto p-3 custom-scrollbar">
+                    <MetricsPanel />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </main>
 

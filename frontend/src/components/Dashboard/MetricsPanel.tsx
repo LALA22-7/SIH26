@@ -73,22 +73,20 @@ function LiveMetrics() {
     return () => clearInterval(id);
   }, []);
 
+  // Always compute coast distance from basin center (not gated on cyclone.active)
   useEffect(() => {
-    if (liveData.cyclone.active) {
-      // Mock storm lat/lon if active (since Open-Meteo doesn't give us storm coords)
-      const lat = liveBasin === 'Bay of Bengal' ? 15.0 : 17.0;
-      const lng = liveBasin === 'Bay of Bengal' ? 88.0 : 68.0;
-      
-      fetch(`${API_BASE}/coastline/distance?lat=${lat}&lon=${lng}`)
-        .then(res => res.json())
-        .then(data => {
-            setCoastDist(data.distance_km);
-            const speed = 15; // default storm speed km/h
-            setTimeToImpact(Math.round(data.distance_km / speed));
-        })
-        .catch(() => { setCoastDist(null); setTimeToImpact(null); });
-    }
-  }, [liveData.cyclone.active, liveBasin, API_BASE]);
+    const lat = liveBasin === 'Bay of Bengal' ? 15.0 : 17.0;
+    const lng = liveBasin === 'Bay of Bengal' ? 88.0 : 68.0;
+    
+    fetch(`${API_BASE}/coastline/distance?lat=${lat}&lon=${lng}`)
+      .then(res => res.json())
+      .then(data => {
+          setCoastDist(data.distance_km != null ? Math.round(data.distance_km) : null);
+          const speed = 15; // default storm speed km/h
+          setTimeToImpact(data.distance_km != null ? Math.round(data.distance_km / speed) : null);
+      })
+      .catch(() => { setCoastDist(null); setTimeToImpact(null); });
+  }, [liveBasin, API_BASE]);
 
   const hasAtmo  = liveData.status === 'LIVE' || liveData.status === 'STALE';
   const hasOcean = hasAtmo;
@@ -133,24 +131,6 @@ function LiveMetrics() {
             <p className="text-[9px] text-text-faint mt-1 font-mono">{lastUp}</p>
           </div>
         </div>
-      </div>
-
-      {/* ── Cyclone Risk & Impact Metrics ── */}
-      <div className="glass-card rounded-xl p-4">
-        <SectionHeader title="Impact Metrics" badge="CALCULATED" badgeVariant="ml" />
-        <MetricGrid>
-          <MetricCell label="Risk of Formation" value={
-            hasAtmo && hasOcean && ocean.sst ? Math.min(100, Math.max(0, ((ocean.sst - 26) * 15) + ((atmo.windSpeed || 0) * 0.5))).toFixed(0) : null
-          } unit="%" color={(ocean.sst && ocean.sst > 28) ? 'text-alert' : 'text-amber-400'} unavailable={!hasOcean || !hasAtmo} />
-          
-          <MetricCell label="Est. Distance to Coast" value={
-            coastDist !== null ? coastDist : null
-          } unit="km" unavailable={coastDist === null} />
-          
-          <MetricCell label="Est. Time to Impact" value={
-            timeToImpact !== null ? timeToImpact : null
-          } unit="hrs" unavailable={timeToImpact === null} />
-        </MetricGrid>
       </div>
 
       {/* ── Atmosphere ── */}
@@ -211,6 +191,24 @@ function LiveMetrics() {
             <span className="font-mono text-[10px] text-text-secondary">255 km</span>
           </div>
         </div>
+      </div>
+
+      {/* ── Impact Metrics (at bottom) ── */}
+      <div className="glass-card rounded-xl p-4">
+        <SectionHeader title="Impact Metrics" badge="CALCULATED" badgeVariant="ml" />
+        <MetricGrid>
+          <MetricCell label="Risk of Formation" value={
+            hasAtmo && hasOcean && ocean.sst ? Math.min(100, Math.max(0, ((ocean.sst - 26) * 15) + ((atmo.windSpeed || 0) * 0.5))).toFixed(0) : null
+          } unit="%" color={(ocean.sst && ocean.sst > 28) ? 'text-alert' : 'text-amber-400'} unavailable={!hasOcean || !hasAtmo} />
+          
+          <MetricCell label="Nearest Coast Dist." value={
+            coastDist !== null ? coastDist : null
+          } unit="km" unavailable={coastDist === null} />
+          
+          <MetricCell label="Est. Time to Impact" value={
+            timeToImpact !== null ? timeToImpact : null
+          } unit="hrs" unavailable={timeToImpact === null} />
+        </MetricGrid>
       </div>
 
     </div>
