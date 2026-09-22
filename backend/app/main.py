@@ -15,6 +15,8 @@ from app.api.classify import router as classify_router
 from app.api.predict import router as predict_router
 from app.api.replay import router as replay_router
 from app.api.metrics import router as metrics_router
+from app.api.reports import router as reports_router
+from app.api.coastline import router as coastline_router
 
 settings = get_settings()
 
@@ -59,6 +61,8 @@ def create_app() -> FastAPI:
     app.include_router(predict_router)
     app.include_router(replay_router)
     app.include_router(metrics_router)
+    app.include_router(reports_router)
+    app.include_router(coastline_router)
 
     return app
 

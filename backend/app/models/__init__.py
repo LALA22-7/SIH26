@@ -5,6 +5,7 @@ from app.models.satellite_frame import SatelliteFrame
 from app.models.classification import Classification
 from app.models.prediction import Prediction
 from app.models.metric_row import MetricRow
+from app.models.ground_report import GroundReport
 
 __all__ = [
     "Base",
@@ -13,4 +14,5 @@ __all__ = [
     "Classification",
     "Prediction",
     "MetricRow",
+    "GroundReport",
 ]

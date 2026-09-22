@@ -70,11 +70,31 @@ function MetricGrid({ children }: { children: React.ReactNode }) {
 function LiveMetrics() {
   const { liveData, liveBasin, setLiveBasin } = useCycloneStore();
   const [now, setNow] = useState(() => Date.now());
+  const [coastDist, setCoastDist] = useState<number | null>(null);
+  const [timeToImpact, setTimeToImpact] = useState<number | null>(null);
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api';
   
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 60000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (liveData.cyclone.active) {
+      // Mock storm lat/lon if active (since Open-Meteo doesn't give us storm coords)
+      const lat = liveBasin === 'Bay of Bengal' ? 15.0 : 17.0;
+      const lng = liveBasin === 'Bay of Bengal' ? 88.0 : 68.0;
+      
+      fetch(`${API_BASE}/coastline/distance?lat=${lat}&lon=${lng}`)
+        .then(res => res.json())
+        .then(data => {
+            setCoastDist(data.distance_km);
+            const speed = 15; // default storm speed km/h
+            setTimeToImpact(Math.round(data.distance_km / speed));
+        })
+        .catch(() => { setCoastDist(null); setTimeToImpact(null); });
+    }
+  }, [liveData.cyclone.active, liveBasin, API_BASE]);
 
   const hasAtmo  = liveData.status === 'LIVE' || liveData.status === 'STALE';
   const hasOcean = hasAtmo;
@@ -130,12 +150,12 @@ function LiveMetrics() {
           } unit="%" color={(ocean.sst && ocean.sst > 28) ? 'text-alert' : 'text-amber-400'} unavailable={!hasOcean || !hasAtmo} />
           
           <MetricCell label="Est. Distance to Coast" value={
-            liveData.cyclone.active ? "320" : null
-          } unit="km" unavailable={!liveData.cyclone.active} />
+            coastDist !== null ? coastDist : null
+          } unit="km" unavailable={coastDist === null} />
           
           <MetricCell label="Est. Time to Impact" value={
-            liveData.cyclone.active ? "24" : null
-          } unit="hrs" unavailable={!liveData.cyclone.active} />
+            timeToImpact !== null ? timeToImpact : null
+          } unit="hrs" unavailable={timeToImpact === null} />
         </MetricGrid>
       </div>
 
@@ -208,6 +228,36 @@ function HistoricalMetrics() {
   const { activeEventId, getCurrentObservation, apiMetricsData } = useCycloneStore();
   const activeCycloneMeta = CYCLONES.find(c => c.id === activeEventId) || CYCLONES[0];
   const obs = getCurrentObservation();
+  const [coastDist, setCoastDist] = useState<number | null>(null);
+  const [timeToImpact, setTimeToImpact] = useState<number | null>(null);
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api';
+
+  useEffect(() => {
+    if (obs?.lat && obs?.lng) {
+      fetch(`${API_BASE}/coastline/distance?lat=${obs.lat}&lon=${obs.lng}`)
+        .then(res => res.json())
+        .then(data => {
+            setCoastDist(data.distance_km);
+            let speed = 15; // default fallback km/h
+            if (obs.prevLat !== null && obs.prevLng !== null && obs.hoursSincePrev) {
+               const lat1 = obs.prevLat * Math.PI / 180;
+               const lon1 = obs.prevLng * Math.PI / 180;
+               const lat2 = obs.lat * Math.PI / 180;
+               const lon2 = obs.lng * Math.PI / 180;
+               const dlon = lon2 - lon1;
+               const dlat = lat2 - lat1;
+               const a = Math.sin(dlat/2)**2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dlon/2)**2;
+               const c = 2 * Math.asin(Math.sqrt(a));
+               const distanceTraveled = 6371 * c; // Earth radius in km
+               if (obs.hoursSincePrev > 0) {
+                 speed = distanceTraveled / obs.hoursSincePrev;
+               }
+            }
+            setTimeToImpact(speed > 0 ? Math.round(data.distance_km / speed) : null);
+        })
+        .catch(() => { setCoastDist(null); setTimeToImpact(null); });
+    }
+  }, [obs?.lat, obs?.lng, obs?.prevLat, obs?.prevLng, obs?.hoursSincePrev, API_BASE]);
 
   if (!obs || !obs.step) {
     return <div className="text-text-faint text-sm p-4">Loading event data...</div>;
@@ -269,6 +319,8 @@ function HistoricalMetrics() {
         <MetricGrid>
           <MetricCell label="Wind Speed" value={activeCycloneMeta.peakWind} unit="km/h" color="text-alert" />
           <MetricCell label="Pressure" value={activeCycloneMeta.minPressure} unit="hPa" />
+          <MetricCell label="Est. Distance to Coast" value={coastDist !== null ? coastDist : null} unit="km" unavailable={coastDist === null} />
+          <MetricCell label="Est. Time to Impact" value={timeToImpact !== null ? timeToImpact : null} unit="hrs" unavailable={timeToImpact === null} />
         </MetricGrid>
       </div>
 

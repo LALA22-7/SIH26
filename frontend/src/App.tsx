@@ -70,11 +70,8 @@ function App() {
           WebkitBackdropFilter: 'blur(24px)'
         }}
       >
-<<<<<<< HEAD
         {/* Left Navigation */}
         <SideNav />
-=======
-        <TopNavigation />
 
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-0">
 
@@ -101,7 +98,6 @@ function App() {
                 </button>
               )}
             </div>
->>>>>>> 393f41c9a7f31ab646f775c7749e9d21794b7162
 
         <div className="flex-1 min-w-0 flex flex-col lg:flex-row gap-0">
           {/* ── Center: Map ── */}

@@ -24,42 +24,34 @@
 ## PHASE 1 — Comprehensive Data Extraction
 *Goal: Go from 7 cyclones / 2 channels / 4km to 50+ cyclones / 32 parameters / 1km.*
 
-### 1.1 INSAT-3DR via MOSDAC (Immediate Priority)
+### 1.1 Kaggle GridSat-B1 Stream-and-Discard Pipeline (Immediate Priority)
 
-We now have MOSDAC credentials. The `scripts/download_insat.py` script is ready and handles authentication, catalog queries, and chunked HDF5 download automatically.
+We have explicitly **abandoned** the massive local INSAT-3DR download via MOSDAC (which required 24 TB of storage and timed out). Instead, we have seamlessly transitioned to **NOAA GridSat-B1** using a unified Kaggle Notebook.
 
-**Execution Steps:**
-1. Fill in `scripts/.env` with your MOSDAC credentials.
-2. Run the downloader for each priority cyclone:
-   ```bash
-   python scripts/download_insat.py --event biparjoy_2023 --start 2023-06-01 --end 2023-06-18
-   ```
-3. Run standardization which now handles both `.nc` and `.h5` formats:
-   ```bash
-   python scripts/standardize_data.py
-   ```
+**Execution Steps (Accomplished & Active):**
+1. Created `notebooks/sih26_unified_pipeline.py`.
+2. Implemented a robust **"Stream-and-Discard"** workflow: Kaggle downloads the 15MB `.nc` files from AWS, slices them to the `(256, 256)` bounding box tensor using `xarray`, saves the 150 KB `.npz`, and immediately deletes the `.nc` file.
+3. This is currently **running on Kaggle**, leveraging their gigabit internet and free GPU to process all 51 cyclones using under 1 GB of disk space.
 
 **Why this is the most impactful single change:**
-- Resolution goes from 4km → 1km (16× more detail per pixel)
-- Inner eyewall formation, spiral feeder bands, exact vortex center — all become visible
-- Expected MAE improvement: ~255 km → ~150 km T+12h
+- Circumvents the 24 TB local disk space requirement.
+- Overcomes the MOSDAC 500 error / rate limiting by using public AWS S3.
+- Expected MAE improvement: ~255 km → ~140 km T+12h (due to expanding from 7 to 51 events).
 
-**INSAT-3DR Key Dataset Variables (HDF5 Schema):**
+**GridSat-B1 Dataset Variables Extracted:**
 
 | Variable Key | Channel | What It Captures |
 |---|---|---|
-| `IMG_TIR1` | Thermal IR (10.3µm) | Cloud top temperature (primary storm intensity signal) |
-| `IMG_TIR2` | Thermal IR (11.5µm) | Secondary thermal window |
-| `IMG_MIR` | Mid-IR (3.9µm) | Differentiates convective vs. stratus |
-| `IMG_WV` | Water Vapour (6.8µm) | Upper-atmosphere circulation patterns |
-| `IMG_VIS` | Visible (0.65µm) | Daytime spiral band structure |
-| `IMG_SWIR` | Short-Wave IR (1.6µm) | Ice vs. water cloud differentiation |
+| `irwin_cdr` | Thermal IR | Cloud top temperature (primary storm intensity signal) |
+| `irwvp` | Water Vapour | Upper-atmosphere circulation patterns |
 
-> We will expand from **2 channels** (IR + WV) to **6 channels** from INSAT-3DR alone.
+> We have discarded the local `scripts/download_insat.py` and MOSDAC APIs completely.
 
 ### 1.2 Priority Cyclone Target List (50 Events)
 
-The following events will be downloaded from MOSDAC and GridSat to expand training:
+### 1.2 Priority Cyclone Target List (51 Events)
+
+The following events are currently being processed in Kaggle via GridSat:
 
 **Tier 1 — Core Training Set (Already have GridSat, add INSAT):**
 - Biparjoy 2023, Amphan 2020, Fani 2019, Tauktae 2021, Ockhi 2017, Phailin 2013, Hudhud 2014
@@ -86,7 +78,7 @@ Beyond satellite imagery, we add meteorological context to pair with each frame:
 
 | # | Parameter | Source API | Script to Build |
 |---|---|---|---|
-| 1-6 | INSAT-3DR multi-spectral bands | MOSDAC HDF5 | `download_insat.py` ✅ |
+| 1-2 | GridSat-B1 IR & WV bands | AWS S3 (GridSat) | `notebooks/sih26_unified_pipeline.py` ✅ |
 | 7 | 10m Wind Speed | ERA5 / Copernicus CDS | `download_era5.py` |
 | 8 | 10m Wind Direction | ERA5 / Copernicus CDS | `download_era5.py` |
 | 9 | Mean Sea Level Pressure | ERA5 | `download_era5.py` |

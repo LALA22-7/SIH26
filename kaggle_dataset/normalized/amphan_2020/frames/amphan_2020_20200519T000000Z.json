@@ -1,0 +1,29 @@
+{
+  "event_id": "amphan_2020",
+  "timestamp": "2020-05-19T00:00:00Z",
+  "source": "noaa_gridsat_b1",
+  "source_file": "amphan_2020_20200519T000000Z.nc",
+  "channels": {
+    "ir": "irwin_cdr",
+    "water_vapor": "irwvp"
+  },
+  "crs": "EPSG:4326",
+  "bbox": [
+    80.0,
+    5.0,
+    95.0,
+    25.0
+  ],
+  "resolution": {
+    "height": 286,
+    "width": 214
+  },
+  "normalization": {
+    "method": "per_frame_min_max",
+    "ir_min": 183.6999969482422,
+    "ir_max": 296.1499938964844,
+    "wv_min": 194.97000122070312,
+    "wv_max": 253.20999145507812
+  },
+  "nan_percentage_pre_clean": 0.0
+}

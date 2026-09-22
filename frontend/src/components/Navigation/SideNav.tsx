@@ -17,15 +17,8 @@ export function SideNav() {
     <nav className="w-64 border-r border-ocean-800 bg-ocean-950/40 flex flex-col p-4">
       {/* Brand logo area */}
       <div className="flex items-center gap-3 mb-8 px-2">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(79,195,224,0.4)]">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-            <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" />
-            <path d="M8.5 8.5v.01" />
-            <path d="M16 15.5v.01" />
-            <path d="M12 12v.01" />
-            <path d="M11 17v.01" />
-            <path d="M7 14v.01" />
-          </svg>
+        <div className="w-10 h-10 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(79,195,224,0.3)] bg-ocean-900 border border-ocean-700/50 flex items-center justify-center">
+          <img src="/logo.png" alt="CycloneWatch Logo" className="w-full h-full object-cover" />
         </div>
         <div className="flex flex-col">
           <span className="text-white font-bold tracking-wide text-sm">CycloneWatch</span>

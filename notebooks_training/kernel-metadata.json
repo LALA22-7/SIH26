@@ -1,0 +1,16 @@
+{
+  "id": "lala227/sih26-model-training",
+  "title": "SIH26 Model Training",
+  "code_file": "02_model_training.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_tpu": "false",
+  "enable_internet": "true",
+  "machine_shape": "",
+  "dataset_sources": ["lala227/sih26-cyclone-data", "lala227/sih26-ml-codebase"],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

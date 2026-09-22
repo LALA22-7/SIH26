@@ -1,0 +1,29 @@
+{
+  "event_id": "tauktae_2021",
+  "timestamp": "2021-05-14T21:00:00Z",
+  "source": "noaa_gridsat_b1",
+  "source_file": "tauktae_2021_20210514T210000Z.nc",
+  "channels": {
+    "ir": "irwin_cdr",
+    "water_vapor": "irwvp"
+  },
+  "crs": "EPSG:4326",
+  "bbox": [
+    50.0,
+    5.0,
+    75.0,
+    25.0
+  ],
+  "resolution": {
+    "height": 286,
+    "width": 357
+  },
+  "normalization": {
+    "method": "per_frame_min_max",
+    "ir_min": 179.3000030517578,
+    "ir_max": 303.2099914550781,
+    "wv_min": 196.52999877929688,
+    "wv_max": 262.9700012207031
+  },
+  "nan_percentage_pre_clean": 0.0
+}

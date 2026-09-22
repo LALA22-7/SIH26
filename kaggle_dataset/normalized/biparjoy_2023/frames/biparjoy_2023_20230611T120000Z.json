@@ -1,0 +1,29 @@
+{
+  "event_id": "biparjoy_2023",
+  "timestamp": "2023-06-11T12:00:00Z",
+  "source": "noaa_gridsat_b1",
+  "source_file": "biparjoy_2023_20230611T120000Z.nc",
+  "channels": {
+    "ir": "irwin_cdr",
+    "water_vapor": "irwvp"
+  },
+  "crs": "EPSG:4326",
+  "bbox": [
+    50.0,
+    5.0,
+    75.0,
+    25.0
+  ],
+  "resolution": {
+    "height": 286,
+    "width": 357
+  },
+  "normalization": {
+    "method": "per_frame_min_max",
+    "ir_min": 185.88999938964844,
+    "ir_max": 325.6099853515625,
+    "wv_min": 198.13999938964844,
+    "wv_max": 258.7300109863281
+  },
+  "nan_percentage_pre_clean": 0.0
+}

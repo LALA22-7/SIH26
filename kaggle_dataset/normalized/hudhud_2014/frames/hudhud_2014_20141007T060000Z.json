@@ -1,0 +1,29 @@
+{
+  "event_id": "hudhud_2014",
+  "timestamp": "2014-10-07T06:00:00Z",
+  "source": "noaa_gridsat_b1",
+  "source_file": "hudhud_2014_20141007T060000Z.nc",
+  "channels": {
+    "ir": "irwin_cdr",
+    "water_vapor": "irwvp"
+  },
+  "crs": "EPSG:4326",
+  "bbox": [
+    80.0,
+    5.0,
+    95.0,
+    25.0
+  ],
+  "resolution": {
+    "height": 286,
+    "width": 214
+  },
+  "normalization": {
+    "method": "per_frame_min_max",
+    "ir_min": 191.14999389648438,
+    "ir_max": 303.3800048828125,
+    "wv_min": 198.88999938964844,
+    "wv_max": 252.13999938964844
+  },
+  "nan_percentage_pre_clean": 0.0
+}

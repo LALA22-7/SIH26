@@ -14,7 +14,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cyclone_secret}
       POSTGRES_DB: ${POSTGRES_DB:-cyclonewatch}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -26,7 +26,6 @@ services:
   api:
     build:
       context: .
-      target: dev
     container_name: cyclonewatch_api
     restart: unless-stopped
     env_file:
@@ -37,7 +36,7 @@ services:
       PYTHONPATH: /ml:/app
       DEBUG: "true"
     ports:
-      - "8000:8000"
+      - "8001:8000"
     volumes:
       # Hot-reload: mount source
       - .:/app

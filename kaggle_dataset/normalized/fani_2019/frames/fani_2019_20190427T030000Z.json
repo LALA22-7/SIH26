@@ -1,0 +1,29 @@
+{
+  "event_id": "fani_2019",
+  "timestamp": "2019-04-27T03:00:00Z",
+  "source": "noaa_gridsat_b1",
+  "source_file": "fani_2019_20190427T030000Z.nc",
+  "channels": {
+    "ir": "irwin_cdr",
+    "water_vapor": "irwvp"
+  },
+  "crs": "EPSG:4326",
+  "bbox": [
+    80.0,
+    5.0,
+    95.0,
+    25.0
+  ],
+  "resolution": {
+    "height": 286,
+    "width": 214
+  },
+  "normalization": {
+    "method": "per_frame_min_max",
+    "ir_min": 184.89999389648438,
+    "ir_max": 313.1199951171875,
+    "wv_min": 196.4499969482422,
+    "wv_max": 257.75
+  },
+  "nan_percentage_pre_clean": 0.0
+}

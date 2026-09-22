@@ -117,10 +117,32 @@ export const useCycloneStore = create<CycloneState>((set, get) => ({
     
     if (!classification) return null;
 
+    let prevLat = null;
+    let prevLng = null;
+    let hoursSincePrev = null;
+    
+    if (timelineIndex > 0) {
+       const prevStep = apiReplayData.steps[timelineIndex - 1];
+       const prevClass = apiClassificationsData.classifications.find(
+          (c: any) => c.timestamp === prevStep.time
+       ) || apiClassificationsData.classifications[timelineIndex - 1];
+       
+       if (prevClass) {
+         prevLat = prevClass.center.lat;
+         prevLng = prevClass.center.lon;
+         const currTime = new Date(step.time).getTime();
+         const prevTime = new Date(prevStep.time).getTime();
+         hoursSincePrev = (currTime - prevTime) / (1000 * 60 * 60);
+       }
+    }
+
     return {
       timestamp: step.time,
       lat: classification.center.lat,
       lng: classification.center.lon,
+      prevLat,
+      prevLng,
+      hoursSincePrev,
       step: step,
       classification: classification
     };

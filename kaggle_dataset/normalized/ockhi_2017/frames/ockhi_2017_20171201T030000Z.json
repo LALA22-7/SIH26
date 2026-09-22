@@ -1,0 +1,29 @@
+{
+  "event_id": "ockhi_2017",
+  "timestamp": "2017-12-01T03:00:00Z",
+  "source": "noaa_gridsat_b1",
+  "source_file": "ockhi_2017_20171201T030000Z.nc",
+  "channels": {
+    "ir": "irwin_cdr",
+    "water_vapor": "irwvp"
+  },
+  "crs": "EPSG:4326",
+  "bbox": [
+    50.0,
+    5.0,
+    75.0,
+    25.0
+  ],
+  "resolution": {
+    "height": 286,
+    "width": 357
+  },
+  "normalization": {
+    "method": "per_frame_min_max",
+    "ir_min": 182.27999877929688,
+    "ir_max": 298.80999755859375,
+    "wv_min": 196.66000366210938,
+    "wv_max": 257.4700012207031
+  },
+  "nan_percentage_pre_clean": 0.0
+}

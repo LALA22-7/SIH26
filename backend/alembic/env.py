@@ -19,7 +19,7 @@ target_metadata = Base.metadata
 # Override sqlalchemy.url from environment variable
 database_sync_url = os.environ.get(
     "DATABASE_SYNC_URL",
-    "postgresql+psycopg2://cyclone:cyclone_secret@localhost:5432/cyclonewatch",
+    "postgresql+psycopg2://cyclone:cyclone_secret@localhost:5433/cyclonewatch",
 )
 config.set_main_option("sqlalchemy.url", database_sync_url)
 

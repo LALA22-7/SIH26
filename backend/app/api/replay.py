@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -35,6 +35,7 @@ router = APIRouter(prefix="/api", tags=["replay"])
 @router.get("/replay/{event_id}", response_model=ReplayResponse)
 async def get_replay(
     event_id: str,
+    source: str = Query("nasa", description="Data source to replay from"),
     db: AsyncSession = Depends(get_db),
 ) -> ReplayResponse:
     """

@@ -133,7 +133,10 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
     return dates;
   }, []);
 
-  const uncertaintyRadiusM = 85_000; 
+  let uncertaintyRadiusM = 85_000; 
+  if (mode === 'HISTORICAL' && obs?.step?.errors?.t24_km) {
+    uncertaintyRadiusM = obs.step.errors.t24_km * 1000;
+  }
 
   return (
     <div className="absolute inset-0 w-full h-full">
@@ -162,7 +165,7 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
         {mode === 'HISTORICAL' && layers.satellite && uniqueDates.map(dateStr => (
           <TileLayer
             key={dateStr}
-            url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`}
+            url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Brightness_Temp_Band31_Day/default/${dateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png`}
             opacity={dateStr === currentDateStr ? 0.65 : 0}
             zIndex={2}
             className="cloud-layer"
@@ -173,7 +176,7 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
         {mode === 'LIVE' && layers.satellite && liveDates.map((dateStr, i) => (
            <TileLayer
              key={dateStr}
-             url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`}
+             url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Brightness_Temp_Band31_Day/default/${dateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png`}
              opacity={i === liveDateOffset ? 0.65 : 0}
              zIndex={2}
              className="cloud-layer cloud-drift"

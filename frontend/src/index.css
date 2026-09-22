@@ -137,3 +137,17 @@
 .animate-spin-slow  { animation: spin-slow  12s linear infinite; }
 .animate-pulse-ring { animation: pulse-ring  2s ease-out infinite; }
 .animate-blink      { animation: blink       2.2s ease-in-out infinite; }
+
+@keyframes cloud-drift {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-5%, 2%); }
+}
+.cloud-drift {
+  animation: cloud-drift 120s linear infinite;
+}
+
+.cloud-layer {
+  mix-blend-mode: screen;
+  filter: brightness(1.3) contrast(1.1);
+  transition: opacity 2s ease-in-out;
+}

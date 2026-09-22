@@ -40,46 +40,45 @@ MANIFEST_PATH = os.path.join(NORMALIZED_DIR, "normalized_manifest.csv")
 
 os.makedirs(NORMALIZED_DIR, exist_ok=True)
 
-BBOXES = {
-    "biparjoy_2023": {"lat": slice(5.0, 25.0), "lon": slice(50.0, 75.0)},
-    "amphan_2020": {"lat": slice(5.0, 25.0), "lon": slice(80.0, 95.0)},
-    "fani_2019": {"lat": slice(5.0, 25.0), "lon": slice(80.0, 95.0)},
-    "tauktae_2021": {"lat": slice(5.0, 25.0), "lon": slice(50.0, 75.0)},
-    "phailin_2013": {"lat": slice(5.0, 25.0), "lon": slice(80.0, 95.0)},
-    "hudhud_2014": {"lat": slice(5.0, 25.0), "lon": slice(80.0, 95.0)},
-    "ockhi_2017": {"lat": slice(5.0, 25.0), "lon": slice(50.0, 75.0)},
-}
+from notebooks.sih26_unified_pipeline import EVENTS
+
+# Create BBOXES dynamically from the unified pipeline events list
+BBOXES = {event["id"]: event["bbox"] for event in EVENTS}
 
 # GridSat-B1 variable names for the channels we need
 IR_VAR = "irwin_cdr"
 WV_VAR = "irwvp"
 
 
-def parse_event_and_timestamp(filename: str):
+def parse_gridsat_filename(nc_path: str):
     """
-    Expects filenames written by the fixed aws_downloader.py:
-    Expects filenames written by aws_downloader.py or download_insat.py:
-        <event_id>_<YYYYMMDDTHHMMSSZ>.nc or .h5
-    e.g. biparjoy_2023_20230606T000000Z.nc
+    Parses GridSat-B1 filenames like GRIDSAT-B1.2023.06.01.00.v02r01.nc
+    and extracts the event_id from the parent folder (e.g., data/raw/gridsat/{event_id}/).
     """
-    stem = filename.replace(".nc", "").replace(".h5", "")
-    for event_id in BBOXES.keys():
-        prefix = event_id + "_"
-        if stem.startswith(prefix):
-            ts_compact = stem[len(prefix):]
-            try:
-                from datetime import datetime, timezone
-                dt = datetime.strptime(ts_compact, "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc)
-                iso_ts = dt.strftime("%Y-%m-%dT%H:%M:%SZ")
-                return event_id, ts_compact, iso_ts
-            except ValueError:
-                return event_id, None, None
-    return None, None, None
-
+    try:
+        filename = os.path.basename(nc_path)
+        # Extract event_id from parent folder name
+        event_id = os.path.basename(os.path.dirname(nc_path))
+        
+        # Example: GRIDSAT-B1.2023.06.01.00.v02r01.nc
+        parts = filename.split('.')
+        year = parts[1]
+        month = parts[2]
+        day = parts[3]
+        hour = parts[4]
+        
+        from datetime import datetime, timezone
+        dt = datetime.strptime(f"{year}{month}{day}{hour}", "%Y%m%d%H").replace(tzinfo=timezone.utc)
+        iso_ts = dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        ts_compact = dt.strftime("%Y%m%dT%H%M%SZ")
+        return event_id, ts_compact, iso_ts
+    except Exception as e:
+        print(f"Failed to parse GridSat filename {nc_path}: {e}")
+        return None, None, None
 
 def standardize_file(nc_path: str, manifest_rows: list):
     filename = os.path.basename(nc_path)
-    event_id, ts_compact, iso_ts = parse_event_and_timestamp(filename)
+    event_id, ts_compact, iso_ts = parse_gridsat_filename(nc_path)
 
     row = {
         "event_id": event_id or "UNKNOWN",
@@ -112,7 +111,12 @@ def standardize_file(nc_path: str, manifest_rows: list):
             return
 
         bbox = BBOXES[event_id]
-        subset = ds.sel(lat=bbox["lat"], lon=bbox["lon"])
+        
+        # GridSat-B1 coordinates are ascending, so slice(min, max) works correctly
+        lat_slice = slice(bbox["lat"][0], bbox["lat"][1])
+        lon_slice = slice(bbox["lon"][0], bbox["lon"][1])
+        
+        subset = ds.sel(lat=lat_slice, lon=lon_slice)
 
         ir = subset[IR_VAR].values.squeeze()
         wv = subset[WV_VAR].values.squeeze()
@@ -172,7 +176,7 @@ def standardize_file(nc_path: str, manifest_rows: list):
             "source_file": filename,
             "channels": {"ir": IR_VAR, "water_vapor": WV_VAR},
             "crs": "EPSG:4326",
-            "bbox": [bbox["lon"].start, bbox["lat"].start, bbox["lon"].stop, bbox["lat"].stop],
+            "bbox": [bbox["lon"][0], bbox["lat"][0], bbox["lon"][1], bbox["lat"][1]],
             "resolution": {"height": int(stacked_tensor.shape[1]), "width": int(stacked_tensor.shape[2])},
             "normalization": {
                 "method": "per_frame_min_max",
@@ -202,97 +206,20 @@ def standardize_file(nc_path: str, manifest_rows: list):
         print(f"FAILED: {filename} -> {e}")
 
 
-def standardize_h5_file(h5_path: str, manifest_rows: list):
-    """
-    Standardize INSAT-3DR HDF5 files from MOSDAC.
-    Extracts TIR1 (IR) and MIR/WV channels.
-    """
-    filename = os.path.basename(h5_path)
-    event_id, ts_compact, iso_ts = parse_event_and_timestamp(filename)
-
-    row = {
-        "event_id": event_id or "UNKNOWN",
-        "timestamp": iso_ts or "",
-        "source_file": filename,
-        "npz_path": "",
-        "tensor_shape": "",
-        "channels": "ir,wv",
-        "nan_percentage": "",
-        "min_value": "",
-        "max_value": "",
-        "status": "FAILED",
-        "reason": "",
-    }
-
-    if event_id is None or ts_compact is None:
-        row["reason"] = "unparseable filename (expected <event>_<YYYYMMDDTHHMMSSZ>.h5)"
-        manifest_rows.append(row)
-        print(f"SKIP (bad filename): {filename}")
-        return
-
-    try:
-        bbox = BBOXES[event_id]
-        with h5py.File(h5_path, 'r') as f:
-            # Note: Update these variable names based on the actual MOSDAC HDF5 schema
-            # INSAT-3DR L1C data usually has data under 'IMG_TIR1' or similar groups
-            if 'IMG_TIR1' not in f or 'IMG_WV' not in f:
-                row["reason"] = "missing expected HDF5 datasets"
-                manifest_rows.append(row)
-                print(f"SKIP (missing dataset): {filename}")
-                return
-            
-            # Simplified mock extraction (in reality, apply bbox coordinates to the grid)
-            ir = f['IMG_TIR1'][:]
-            wv = f['IMG_WV'][:]
-            
-        ir_clean = np.nan_to_num(ir, nan=0.0)
-        wv_clean = np.nan_to_num(wv, nan=0.0)
-
-        ir_min, ir_max = float(ir_clean.min()), float(ir_clean.max())
-        wv_min, wv_max = float(wv_clean.min()), float(wv_clean.max())
-        
-        ir_norm = (ir_clean - ir_min) / (ir_max - ir_min + 1e-6)
-        wv_norm = (wv_clean - wv_min) / (wv_max - wv_min + 1e-6)
-
-        stacked_tensor = np.stack([ir_norm, wv_norm], axis=0)
-        
-        event_out_dir = os.path.join(NORMALIZED_DIR, event_id, "frames")
-        os.makedirs(event_out_dir, exist_ok=True)
-        out_stem = f"{event_id}_{ts_compact}"
-        out_path = os.path.join(event_out_dir, f"{out_stem}.npz")
-
-        np.savez_compressed(
-            out_path, image=stacked_tensor, channels=np.array(["ir", "wv"]),
-            event_id=event_id, timestamp=iso_ts, crs="EPSG:4326"
-        )
-        
-        row.update({
-            "npz_path": out_path, "tensor_shape": str(stacked_tensor.shape),
-            "status": "PASS"
-        })
-        manifest_rows.append(row)
-        print(f"Standardized HDF5: {out_path}  shape={stacked_tensor.shape}")
-
-    except Exception as e:
-        row["reason"] = f"exception: {e}"
-        manifest_rows.append(row)
-        print(f"FAILED HDF5: {filename} -> {e}")
-
-
 def main():
-    nc_files = sorted(glob.glob(os.path.join(RAW_DIR, "*.nc")))
-    h5_files = sorted(glob.glob(os.path.join(RAW_DIR, "*.h5")))
+    # GridSat files are saved in data/raw/gridsat/{event_id}/*.nc
+    nc_files = sorted(glob.glob(os.path.join(RAW_DIR, "**", "*.nc"), recursive=True))
     
-    if not nc_files and not h5_files:
-        print(f"No .nc or .h5 files found in {RAW_DIR}. Run aws_downloader.py or download_insat.py first.")
+    # Filter out anything that doesn't start with GRIDSAT-B1 to avoid old junk files
+    nc_files = [f for f in nc_files if os.path.basename(f).startswith("GRIDSAT")]
+    
+    if not nc_files:
+        print(f"No GridSat .nc files found in {RAW_DIR}. Run batch_download_gridsat.py first.")
         return
 
     manifest_rows = []
     for f in nc_files:
         standardize_file(f, manifest_rows)
-        
-    for f in h5_files:
-        standardize_h5_file(f, manifest_rows)
 
     with open(MANIFEST_PATH, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=[

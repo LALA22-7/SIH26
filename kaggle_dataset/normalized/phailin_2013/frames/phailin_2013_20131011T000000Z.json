@@ -1,0 +1,29 @@
+{
+  "event_id": "phailin_2013",
+  "timestamp": "2013-10-11T00:00:00Z",
+  "source": "noaa_gridsat_b1",
+  "source_file": "phailin_2013_20131011T000000Z.nc",
+  "channels": {
+    "ir": "irwin_cdr",
+    "water_vapor": "irwvp"
+  },
+  "crs": "EPSG:4326",
+  "bbox": [
+    80.0,
+    5.0,
+    95.0,
+    25.0
+  ],
+  "resolution": {
+    "height": 286,
+    "width": 214
+  },
+  "normalization": {
+    "method": "per_frame_min_max",
+    "ir_min": 189.6699981689453,
+    "ir_max": 296.8599853515625,
+    "wv_min": 183.16000366210938,
+    "wv_max": 253.22999572753906
+  },
+  "nan_percentage_pre_clean": 0.0
+}

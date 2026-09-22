@@ -34,6 +34,15 @@ class Classification(Base):
     confidence: Mapped[float] = mapped_column(Float, nullable=False)
     model_name: Mapped[str] = mapped_column(String(128), nullable=False)
     model_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    
+    # Phase 3 Expansion: Multi-task ML predictions
+    damage_class: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    severity_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    t12_lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    t12_lon: Mapped[float | None] = mapped_column(Float, nullable=True)
+    t24_lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    t24_lon: Mapped[float | None] = mapped_column(Float, nullable=True)
+    
     # PostGIS Point — always inserted as ST_SetSRID(ST_MakePoint(lon, lat), 4326)
     # In tests (SQLite) this column is plain Text — no spatial operations performed.
     geometry = mapped_column(PointGeometry, nullable=True)
