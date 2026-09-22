@@ -112,26 +112,7 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
   }, [mode, apiClassificationsData]);
 
   const currentDateStr = obs?.timestamp?.split('T')[0];
-
-  // For live mode animation, cycle through last 3 days
-  const [liveDateOffset, setLiveDateOffset] = useState(0);
-  useEffect(() => {
-    if (mode !== 'LIVE') return;
-    const interval = setInterval(() => {
-      setLiveDateOffset(prev => (prev + 1) % 3);
-    }, 1500); // 1.5 seconds per frame
-    return () => clearInterval(interval);
-  }, [mode]);
-
-  const liveDates = useMemo(() => {
-    const dates = [];
-    for (let i = 2; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      dates.push(d.toISOString().split('T')[0]);
-    }
-    return dates;
-  }, []);
+  const liveDateStr = new Date().toISOString().split('T')[0];
 
   let uncertaintyRadiusM = 85_000; 
   if (mode === 'HISTORICAL' && obs?.step?.errors?.t24_km) {
@@ -175,16 +156,16 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
           />
         ))}
 
-        {/* Live mode animation (last 3 days) */}
-        {mode === 'LIVE' && layers.satellite && liveDates.map((dateStr, i) => (
+        {/* Live mode static (latest available) */}
+        {mode === 'LIVE' && layers.satellite && (
            <TileLayer
-             key={dateStr}
-             url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`}
-             opacity={i === liveDateOffset ? 0.75 : 0}
+             key={liveDateStr}
+             url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${liveDateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`}
+             opacity={0.75}
              zIndex={2}
-             className="cloud-layer cloud-drift"
+             className="cloud-layer"
            />
-        ))}
+        )}
 
         {mode === 'HISTORICAL' && obs && (
           <>
@@ -256,9 +237,6 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
         .cloud-layer       { 
           filter: contrast(1.1) brightness(1.1) !important; 
           transition: opacity 0.4s ease-in-out !important; 
-        }
-        .cloud-drift       {
-          animation: cloud-drift 120s linear infinite;
         }
         .leaflet-pane      { z-index: auto !important; }
         .leaflet-top, .leaflet-bottom { z-index: 10 !important; }

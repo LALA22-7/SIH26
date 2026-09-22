@@ -75,7 +75,7 @@ export const useCycloneStore = create<CycloneState>((set, get) => ({
   activeEventId: 'biparjoy_2023', // Default
   timelineIndex: 0,
   isPlaying:     false,
-  introComplete: true,
+  introComplete: false,
   liveData:      DEFAULT_LIVE_DATA,
   evidenceOpen:  false,
   

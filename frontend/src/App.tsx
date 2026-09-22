@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useCycloneStore } from './store/useCycloneStore';
+import { IntroAnimation } from './components/IntroAnimation';
 import { SideNav } from './components/Navigation/SideNav';
 import { SatellitePanel } from './components/Dashboard/SatellitePanel';
 import { MetricsPanel } from './components/Dashboard/MetricsPanel';
@@ -12,7 +13,7 @@ import { CYCLONES } from './data/cyclones';
 
 function App() {
   const {
-    isPlaying, timelineIndex,
+    introComplete, isPlaying, timelineIndex,
     setTimelineIndex, mode, activeEventId, activePage,
     fetchLiveData, evidenceOpen, openEvidence, closeEvidence,
   } = useCycloneStore();
@@ -66,10 +67,14 @@ function App() {
   return (
     <div className="w-full h-screen bg-[#040814] text-text-primary overflow-hidden flex flex-col p-2 sm:p-3 lg:p-4">
 
+      {/* Intro splash */}
+      {!introComplete && <IntroAnimation />}
+
       {/* Main workspace */}
       <main
-        className="flex-1 min-h-0 w-full max-w-[1920px] mx-auto rounded-[1.5rem] border border-white/5 flex overflow-hidden shadow-glass"
+        className="flex-1 min-h-0 w-full max-w-[1920px] mx-auto rounded-[1.5rem] border border-white/5 flex overflow-hidden transition-opacity duration-700 shadow-glass"
         style={{
+          opacity: introComplete ? 1 : 0,
           background: 'rgba(11, 17, 32, 0.65)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)'
