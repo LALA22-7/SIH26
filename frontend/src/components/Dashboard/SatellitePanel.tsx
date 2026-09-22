@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  Plus, Minus, Layers, Radio, MoreHorizontal,
+  Plus, Minus, Radio, MoreHorizontal,
   Navigation, Maximize2, Database, Clock,
   Eye, Wind, Waves, Map, GitBranch, Triangle,
 } from 'lucide-react';
@@ -61,15 +61,12 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
   });
 
   // Popover states
-  const [layersOpen, setLayersOpen] = useState(false);
   const [dotMenuOpen, setDotMenuOpen] = useState(false);
-  const layerRef  = useRef<HTMLDivElement>(null);
   const dotRef    = useRef<HTMLDivElement>(null);
 
   // Close popovers on outside click
   useEffect(() => {
     function handle(e: MouseEvent) {
-      if (layerRef.current && !layerRef.current.contains(e.target as Node)) setLayersOpen(false);
       if (dotRef.current  && !dotRef.current.contains(e.target as Node))  setDotMenuOpen(false);
     }
     document.addEventListener('mousedown', handle);
@@ -81,7 +78,6 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
 
   const applyPreset = (p: Preset) => {
     setLayers(PRESETS[p]);
-    setLayersOpen(false);
   };
 
   const formatIST = (isoString: string) => {
@@ -198,7 +194,7 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
       {/* ── Three-dot menu — bottom-right ── */}
       <div className="absolute bottom-28 right-4 z-20" ref={dotRef}>
         <button
-          onClick={() => { setDotMenuOpen(v => !v); setLayersOpen(false); }}
+          onClick={() => { setDotMenuOpen(v => !v); }}
           className={`w-8 h-8 glass-chrome rounded-lg flex items-center justify-center transition-colors ${
             dotMenuOpen ? 'text-confidence' : 'text-text-muted hover:text-text-primary'
           }`}

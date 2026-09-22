@@ -1,13 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Activity } from 'lucide-react';
 import { useCycloneStore } from '../../store/useCycloneStore';
-import { CYCLONES, PATTERN_LABELS, PATTERN_COLORS, BASELINES } from '../../data/cyclones';
-
-const formatIST = (isoString: string) => {
-  if (!isoString) return '';
-  const date = new Date(isoString);
-  return date.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' IST';
-};
+import { CYCLONES, PATTERN_LABELS, BASELINES } from '../../data/cyclones';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -225,7 +219,7 @@ function LiveMetrics() {
 
 // ── HISTORICAL MODE ───────────────────────────────────────────────────────────
 function HistoricalMetrics() {
-  const { activeEventId, getCurrentObservation, apiMetricsData } = useCycloneStore();
+  const { activeEventId, getCurrentObservation } = useCycloneStore();
   const activeCycloneMeta = CYCLONES.find(c => c.id === activeEventId) || CYCLONES[0];
   const obs = getCurrentObservation();
   const [coastDist, setCoastDist] = useState<number | null>(null);
@@ -263,22 +257,14 @@ function HistoricalMetrics() {
     return <div className="text-text-faint text-sm p-4">Loading event data...</div>;
   }
 
-  const { classification, step } = obs;
-  // Truncate frame_id for cleaner display
-  const displayFrameId = obs.classification?.frame_id 
-    ? obs.classification.frame_id.substring(0, 16) + '...'
-    : 'N/A';
-
+  const { step } = obs;
+  
   // Format confidence nicely to avoid literal 0.0% looking like a bug
   const patternLabel = obs.classification?.pattern?.label || 'unlabeled';
   const rawConf = obs.classification?.pattern?.confidence || 0;
   const patternConf = rawConf > 0 && rawConf < 0.05 
     ? '< 5.0'
     : (rawConf * 100).toFixed(1);
-    
-  const confColor = rawConf > 0.8 ? 'text-ir' : 'text-confidence';
-
-  const obsTimestamp = formatIST(obs.timestamp);
 
   return (
     <div className="flex flex-col gap-3">
@@ -353,10 +339,10 @@ function HistoricalMetrics() {
           <span className="metric-label mb-2 block">Morphology Analysis</span>
           <div className="grid grid-cols-4 gap-2">
             {[
-              { label: 'Well Defined Eye', active: patternLabel.includes('eye') || patternConf > 80 },
+              { label: 'Well Defined Eye', active: patternLabel.includes('eye') || (rawConf * 100) > 80 },
               { label: 'Spiral Bands', active: true },
-              { label: 'Symmetric', active: patternLabel.includes('curved') || patternConf > 70 },
-              { label: 'Organized', active: patternConf > 50 }
+              { label: 'Symmetric', active: patternLabel.includes('curved') || (rawConf * 100) > 70 },
+              { label: 'Organized', active: (rawConf * 100) > 50 }
             ].map((m, i) => (
               <div key={i} className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${m.active ? 'bg-blue-500/10 border-blue-400/30 text-blue-400 shadow-[inset_0_0_10px_rgba(59,130,246,0.1)]' : 'bg-ocean-900/50 border-ocean-800 text-text-faint'}`}>
                 <div className={`w-3 h-3 rounded-full mb-1 border flex items-center justify-center ${m.active ? 'bg-blue-500 border-blue-400' : 'bg-transparent border-ocean-700'}`}>
