@@ -154,19 +154,22 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
       >
         <MapController onMapReady={handleMapReady} />
 
-        <TileLayer
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-          attribution="© Esri"
-          zIndex={1}
-          className="base-tiles"
-        />
+        {/* Esri Base Layer (toggled with satellite) */}
+        {layers.satellite && (
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            attribution="© Esri"
+            zIndex={1}
+            className="base-tiles"
+          />
+        )}
 
         {/* NASA GIBS Cloud Layer (Historical) - Precached layers with opacity crossfade */}
         {mode === 'HISTORICAL' && layers.satellite && uniqueDates.map(dateStr => (
           <TileLayer
             key={dateStr}
-            url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Brightness_Temp_Band31_Day/default/${dateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png`}
-            opacity={dateStr === currentDateStr ? 0.65 : 0}
+            url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`}
+            opacity={dateStr === currentDateStr ? 0.75 : 0}
             zIndex={2}
             className="cloud-layer"
           />
@@ -176,8 +179,8 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
         {mode === 'LIVE' && layers.satellite && liveDates.map((dateStr, i) => (
            <TileLayer
              key={dateStr}
-             url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Brightness_Temp_Band31_Day/default/${dateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png`}
-             opacity={i === liveDateOffset ? 0.65 : 0}
+             url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`}
+             opacity={i === liveDateOffset ? 0.75 : 0}
              zIndex={2}
              className="cloud-layer cloud-drift"
            />
@@ -251,9 +254,8 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
         .leaflet-container { background: #080e18 !important; }
         .base-tiles        { filter: brightness(0.65) contrast(1.1) saturate(0.75) !important; }
         .cloud-layer       { 
-          filter: contrast(1.05) brightness(1.05) !important; 
+          filter: contrast(1.1) brightness(1.1) !important; 
           transition: opacity 0.4s ease-in-out !important; 
-          mix-blend-mode: screen; 
         }
         .cloud-drift       {
           animation: cloud-drift 120s linear infinite;
