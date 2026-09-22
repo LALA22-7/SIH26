@@ -7,11 +7,11 @@ from app.services.geo import haversine_km
 router = APIRouter(prefix="/api/coastline", tags=["Coastline"])
 
 # Load geojson once
-DATA_ROOT = os.getenv("DATA_ROOT", "/data")
+DATA_ROOT = os.getenv("DATA_ROOT", "/app/data")
 COASTLINE_PATH = os.path.join(DATA_ROOT, "india_coastline.geojson")
 if not os.path.exists(COASTLINE_PATH):
     # Fallback to local relative path if not in docker
-    COASTLINE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../data/india_coastline.geojson"))
+    COASTLINE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/india_coastline.geojson"))
 
 coastal_points: List[Tuple[float, float]] = []
 
