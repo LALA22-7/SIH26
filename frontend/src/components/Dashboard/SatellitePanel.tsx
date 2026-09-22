@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Plus, Minus, Radio, MoreHorizontal,
   Navigation, Maximize2, Database, Clock,
-  Eye, Wind, Waves, Map, GitBranch, Triangle, Layers, ChevronDown
+  Eye, Wind, Waves, Map, GitBranch, Triangle, Layers
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LeafletMap } from './LeafletMap';
