@@ -1,4 +1,4 @@
-﻿# Frontend Explainer: The Face of CycloneWatch
+# Frontend Explainer: The Face of CycloneWatch
 
 *This document explains the Frontend of CycloneWatch in simple terms so anyone — technical or not — can understand what it does and how it works.*
 
@@ -31,13 +31,18 @@ The frontend is a web application that runs inside your browser. It does not do 
 | 🟡 Yellow line | The ML model's predicted track (where it thought the storm would go) |
 | ⚪ White dots | Actual observed storm positions (from IBTrACS best-track data) |
 | 🔵 Blue circle | Current active observation marker |
-| ☁️ Cloud layer | Real NASA MODIS satellite imagery from that exact date |
-| 🔴 Red area | Forecast uncertainty region |
+| ☁️ Cloud layer | Real NASA Infrared (IR) satellite imagery from that exact date, rendered with `mix-blend-mode: screen` to eliminate tile borders |
+| 🔴 Red area | Forecast uncertainty region — radius dynamically scales with the model's actual T+24h MAE |
+| 🌀 CycloneWatch logo | Custom branding in the left sidebar navigation |
 
 ---
 
 ## Live Monitoring Mode
 When switched to LIVE mode, the dashboard connects to the **Open-Meteo API** (a free, real-time weather data provider) and pulls actual current measurements for wind, pressure, rainfall, sea surface temperature, and wave height for either the Bay of Bengal or Arabian Sea. This is 100% real data, updated every 60 minutes.
+
+The metrics panel also dynamically computes:
+- **Distance to Indian Coast** — Haversine geodesic distance via the backend's `/api/coastline/distance` endpoint
+- **Estimated Time to Impact** — Derived from the storm's actual calculated translation speed
 
 ---
 

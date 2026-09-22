@@ -1,4 +1,4 @@
-﻿# Machine Learning Explainer: The Brain of CycloneWatch
+# Machine Learning Explainer: The Brain of CycloneWatch
 
 *This document explains the Machine Learning (ML) pipeline of CycloneWatch in simple terms so anyone — technical or not — can understand what it does, how it was trained, and what its current capabilities are.*
 
@@ -132,11 +132,12 @@ This is not about replacing NWP. It is about adding a fast, automated first-look
 
 | Improvement | What It Requires | Expected Impact |
 |---|---|---|
-| MOSDAC/INSAT-3DR data (1 km resolution) | ISRO research access (pending) | 16x more spatial detail per frame |
+| **51-cyclone training (Kaggle pipeline ready)** | Run Kaggle notebook | **Major MAE reduction (~255 → ~140 km T+12h)** |
+| ConvLSTM sequence training | Sliding window dataset | Trained T+12h/T+24h predictions instead of persistence |
+| ERA5 atmospheric context (32 params) | Copernicus CDS API key | Wind shear, vorticity, SST as additional input channels |
 | Confidence Calibration | Temperature scaling on val set | Confidence % will be statistically meaningful |
-| Temporal ConvLSTM model | More training data | Trained T+12h/T+24h predictions instead of persistence extrapolation |
-| More training cyclones | Data download time | Better generalization, lower MAE |
-| Visible-light channel | INSAT-3DR access | Three channels instead of two |
+| MOSDAC/INSAT-3DR data (1 km resolution) | ISRO research access | 16x more spatial detail per frame |
+| M+G+S Ground Impact heads | NDRF damage labels | Predict damage type + severity alongside morphology |
 
 ---
 

@@ -1,6 +1,8 @@
 # CycloneWatch: Comprehensive Future Implementation Plan
 
-> **Document Status:** Active | **Last Updated:** September 2026 | **Maintained by:** CycloneWatch Team, SIH26
+> **Document Status:** Active | **Last Updated:** September 2026 (post-cleanup) | **Maintained by:** CycloneWatch Team, SIH26
+>
+> **See also:** [ROADMAP.md](../ROADMAP.md) for a concise summary of what's next.
 
 This document is the single authoritative source for every planned future change to the CycloneWatch platform — from minor UI tweaks to complete ML architecture overhauls. Each section covers what the change is, why it's needed, exactly how it will be built, what data sources we will use, and what performance improvements we expect.
 
@@ -279,12 +281,12 @@ The current model's confidence output (`fc_confidence` head) is **not trained** 
 
 ### The Problem (Untrained Model Bias & Hardcoded UI)
 1. **Live Inference Bias:** Currently, if live inference is run, the backend calls `ml/inference.py`. Because the `model.pt` checkpoint hasn't been generated via a full training loop in the current environment, PyTorch defaults to an untrained model with random weights. This causes a heavy bias where it classifies almost everything as "Disorganized".
-2. **Hardcoded Metrics:** The "Distance to Coast" (320km) and "Time to Impact" (24hrs) metrics on the dashboard are currently UI placeholders for the demo phase.
+2. ~~**Hardcoded Metrics:** The "Distance to Coast" (320km) and "Time to Impact" (24hrs) metrics on the dashboard are currently UI placeholders for the demo phase.~~ **✅ RESOLVED (Sep 2026)**
 
 ### The Fix
 1. **Run the Training Loop:** Execute `python -m ml.src.train` to train the CNN on the 423 labeled frames and generate a valid `model.pt` checkpoint. This will restore the 78.3% pattern accuracy for live predictions.
-2. **Geospatial Math Integration:** Replace the hardcoded UI metrics by implementing a Haversine intersection algorithm. We will load a GeoJSON of the Indian coastline and calculate the exact distance from the storm's current `[lat, lon]` to the nearest coastal boundary polygon.
-3. **Time to Impact Calculation:** Divide the exact distance to the coast by the storm's calculated movement speed vector to yield a dynamic, accurate "Time to Impact" ETA.
+2. ~~**Geospatial Math Integration:** Replace the hardcoded UI metrics by implementing a Haversine intersection algorithm.~~ **✅ DONE** — `GET /api/coastline/distance` endpoint now computes real Haversine distance to the Indian coastline using `india_coastline.geojson`.
+3. ~~**Time to Impact Calculation:** Divide the exact distance to the coast by the storm's calculated movement speed vector.~~ **✅ DONE** — `MetricsPanel.tsx` now dynamically computes storm translation speed from consecutive frame coordinates and derives Time to Impact.
 
 ---
 
@@ -299,8 +301,9 @@ These are small, self-contained changes that can be implemented in 1–2 days ea
 | Alert / Profile page redesign | New component files | ⏳ Queued | Currently placeholder buttons |
 | Cyclone regions (beyond 2 basins) | `cyclones.ts`, `TopNavigation.tsx` | ⏳ Queued | Add: BoA, Somalia Basin sub-regions |
 | Risk formation % heuristic | `MetricsPanel.tsx` | ✅ Done | SST + wind heuristic added |
-| Distance to coast display | `MetricsPanel.tsx` | ✅ Done | Static placeholder — needs geodesy |
-| Time to impact display | `MetricsPanel.tsx` | ✅ Done | Static placeholder — needs track model |
+| Distance to coast display | `MetricsPanel.tsx` | ✅ Done | **Dynamic Haversine via `/api/coastline/distance`** |
+| Time to impact display | `MetricsPanel.tsx` | ✅ Done | **Dynamic — computed from real storm speed** |
+| Uncertainty cone scaling | `LeafletMap.tsx` | ✅ Done | **Dynamic — scales with `t24_km` MAE** |
 | IST timezone globally | All UI components | ✅ Done | |
 | Map layout 70:30 | `App.tsx` | ✅ Done | |
 | Green live indicator dot | `SatellitePanel.tsx` | ✅ Done | |

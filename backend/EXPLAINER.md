@@ -1,4 +1,4 @@
-﻿# Backend Explainer: The Engine of CycloneWatch
+# Backend Explainer: The Engine of CycloneWatch
 
 *This document explains the backend of CycloneWatch in simple terms so anyone — technical or not — can understand what it does and how it works.*
 
@@ -24,7 +24,7 @@ Running the AI model on a satellite image in real-time takes a few seconds. For 
 
 ---
 
-## The 6 Endpoints (The Menu)
+## The 8 Endpoints (The Menu)
 
 Think of the backend as a restaurant. The frontend is the customer, and these are the "menu items" it can order:
 
@@ -36,6 +36,8 @@ Think of the backend as a restaurant. The frontend is the customer, and these ar
 | `GET /api/ps70/classifications/{cyclone_name}` | Returns the AI's structural label for every observation |
 | `POST /api/ps70/classify` | "Look at this new image and classify it" (real-time inference) |
 | `GET /api/ps70/frames/{frame_id}` | Returns metadata about a specific satellite frame |
+| `GET /api/coastline/distance?lat=&lon=` | Calculates the Haversine distance from a storm center to the nearest point on the Indian coastline |
+| `POST /api/reports` | Submit a ground destruction report (for NDRF/field agents) |
 
 ---
 

@@ -35,12 +35,13 @@ CycloneWatch applies deep convolutional neural networks directly to infrared and
 SIH26/
 ├── backend/           # FastAPI server, SQLite DB, ML inference endpoints
 │   ├── app/
-│   │   ├── api/       # Route handlers: /classify, /predict, /replay, /metrics
+│   │   ├── api/       # Route handlers: /classify, /predict, /replay, /metrics,
+│   │   │              #   /coastline (distance calc), /reports (ground reports)
 │   │   ├── core/      # Config, settings
 │   │   ├── db/        # SQLAlchemy async engine & session management
-│   │   ├── models/    # DB ORM models
+│   │   ├── models/    # DB ORM models (Classification, GroundReport)
 │   │   ├── schemas/   # Pydantic request/response schemas
-│   │   └── services/  # classify_service.py, ml_adapter.py
+│   │   └── services/  # classify_service.py, ml_adapter.py, geo.py
 │   ├── scripts/       # seed_db.py, precompute_replay.py
 │   └── cyclonewatch.db # SQLite database (precomputed replay data)
 │
@@ -49,38 +50,47 @@ SIH26/
 │   │   ├── model.py   # CycloneCNN + CycloneTemporalModel (CNN+GRU)
 │   │   ├── train.py   # Training loop with class-weighted CE loss
 │   │   ├── dataset.py # CycloneDataset PyTorch Dataset class
+│   │   ├── finetune.py # Fine-tuning script for expanded datasets
 │   │   └── evaluate.py
 │   ├── inference.py   # Public predict_frame() / predict_sequence() API
-│   ├── checkpoints/   # model.pt (trained weights)
+│   ├── checkpoints/   # model.pt, finetuned_model.pt (trained weights)
 │   └── configs/       # model_config.json, evaluation_metrics.json
 │
 ├── data/              # Satellite data pipeline
 │   ├── raw/           # Downloaded GridSat-B1 NetCDF files
 │   ├── normalized/    # Per-frame NPZ tensors (output of standardize_data.py)
 │   ├── ground_truth/  # IBTrACS best-track CSVs + ground_truth_labels.csv
+│   ├── india_coastline.geojson  # Simplified Indian coastline for distance calc
 │   ├── training_manifest.csv
 │   └── metadata.csv
 │
 ├── frontend/          # React + TypeScript + Leaflet SPA
+│   ├── public/        # Static assets (logo.png, india_coastline.geojson)
 │   └── src/
-│       ├── App.tsx               # Root layout (70:30 map:metrics split)
+│       ├── App.tsx               # Root layout (SideNav + 70:30 map:metrics split)
 │       ├── store/useCycloneStore.ts # Zustand state manager
 │       ├── data/cyclones.ts       # Cyclone metadata & pattern taxonomy
-│       └── components/Dashboard/
-│           ├── SatellitePanel.tsx  # Leaflet map with overlays & live feed
-│           ├── MetricsPanel.tsx    # Right-side metrics: intensity, impact
-│           ├── EvidenceDrawer.tsx  # Source provenance slide-out
-│           ├── Timeline.tsx        # Historical frame scrubber (IST)
-│           └── LeafletMap.tsx      # Map component with trajectory layers
+│       └── components/
+│           ├── Navigation/SideNav.tsx   # Left sidebar navigation with logo
+│           ├── Dashboard/
+│           │   ├── MetricsPanel.tsx     # Right-side metrics (dynamic coast dist, TTI)
+│           │   ├── EvidenceDrawer.tsx   # Source provenance slide-out
+│           │   ├── Timeline.tsx         # Historical frame scrubber (IST)
+│           │   └── LeafletMap.tsx       # Map with trajectory, IR GIBS, cloud-drift
+│           └── IntroAnimation.tsx      # Splash screen animation
+│
+├── notebooks/         # Kaggle pipeline notebooks (GridSat download + training)
+├── scripts/           # Data pipeline scripts (download, standardize, label, validate)
 │
 ├── docs/              # Technical documentation
-│   ├── future_implementation.md  # Comprehensive roadmap (THIS FILE LINKS HERE)
+│   ├── future_implementation.md  # Detailed future implementation plan
 │   ├── taxonomy.md               # The 5-class morphology taxonomy
 │   ├── metrics_explained.md      # Dashboard metric definitions
 │   ├── model_explained.md        # ML architecture deep-dive
 │   ├── api_contract.md           # Full API schema contract
 │   └── ...
 │
+├── ROADMAP.md            # Future implementation roadmap (what's next)
 ├── PROJECT_EXPLAINER.md  # Non-technical full project explainer (read this first)
 └── README.md             # This file
 ```
@@ -213,9 +223,12 @@ This spins up the FastAPI server + PostgreSQL container together.
 | F1 — Shear-Affected | 0.80 |
 | F1 — Disorganized | 0.88 |
 | Inference speed | ~12 ms/frame (CPU) |
+| Distance to Coast | **Dynamic** (Haversine geodesic via `/api/coastline/distance`) |
+| Time to Impact | **Dynamic** (computed from real storm translation speed) |
+| Uncertainty Cone | **Dynamic** (scales with actual T+24 MAE error) |
 
-> Training set: 7 cyclones, 423 total labeled frames.  
-> Baseline persistence T+12 MAE: 255 km (model is at baseline — upgrading with ConvLSTM in Phase 2).
+> Training set: 7 cyclones, 423 total labeled frames. Kaggle pipeline ready for 51 cyclones.  
+> Baseline persistence T+12 MAE: 255 km — upgrading with ConvLSTM sequence training next.
 
 ---
 
@@ -257,16 +270,17 @@ Satellite Data (INSAT/GridSat-B1)
 
 ## 🔮 Future Roadmap
 
-**Immediate Next Steps (Phase 2):**
-1. **ISRO MOSDAC Integration** — 1km INSAT-3DR imagery (16× spatial resolution upgrade)
-2. **ConvLSTM Temporal Forecasting** — Replace persistence fallback with learned T+12 / T+24 / T+48 predictions
-3. **Expanded Training Pipeline** — 30–50 cyclone events from EU ECMWF + ISRO archives
+**Immediate Next Steps:**
+1. **ML Model Retraining** — Train on 51 cyclones (Kaggle pipeline ready), expand from 2 → 6 input channels
+2. **ConvLSTM Temporal Forecasting** — Replace persistence fallback with learned T+12 / T+24 predictions
+3. **ERA5 Atmospheric Context** — Integrate 32-parameter meteorological data (wind shear, vorticity, SST)
 
-**Vision (Phase 4–5):**
-4. **M+G+S Multi-Task Impact Engine** — Predict Ground Damage Types & Severity alongside morphology
-5. **3D CesiumJS Globe UI** — Replace Leaflet 2D map with WebGL-powered 3D Earth
+**Medium-Term:**
+4. **PostgreSQL Migration** — Replace SQLite with PostGIS for spatial queries and scale
+5. **M+G+S Multi-Task Impact Engine** — Predict Ground Damage Types & Severity alongside morphology
+6. **Real-Time INSAT Polling** — MOSDAC WMS integration for live 30-min INSAT-3DR imagery
 
-📖 **Full detailed plan:** [docs/future_implementation.md](docs/future_implementation.md)
+📖 **Full detailed plan:** [ROADMAP.md](ROADMAP.md)
 
 ---
 
@@ -275,7 +289,8 @@ Satellite Data (INSAT/GridSat-B1)
 | Topic | Document |
 |-------|---------|
 | Non-technical full project explainer | [PROJECT_EXPLAINER.md](PROJECT_EXPLAINER.md) |
-| Future roadmap & implementation plan | [docs/future_implementation.md](docs/future_implementation.md) |
+| **Future roadmap (what's next)** | [**ROADMAP.md**](ROADMAP.md) |
+| Detailed future implementation plan | [docs/future_implementation.md](docs/future_implementation.md) |
 | The 5-class pattern taxonomy | [docs/taxonomy.md](docs/taxonomy.md) |
 | Dashboard metric definitions | [docs/metrics_explained.md](docs/metrics_explained.md) |
 | ML model architecture deep-dive | [docs/model_explained.md](docs/model_explained.md) |
