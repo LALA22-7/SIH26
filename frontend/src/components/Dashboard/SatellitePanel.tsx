@@ -106,11 +106,11 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
       {/* Zoom controls */}
       <div className="absolute top-4 left-4 z-20 flex flex-col gap-1">
         <div className="glass-chrome rounded-lg overflow-hidden flex flex-col">
-          <IconButton onClick={mapZoomIn} label="Zoom in" className="glass-chrome">
+          <IconButton onClick={mapZoomIn} label="Zoom in" className="glass-chrome !text-yellow-300 hover:!text-yellow-200">
             <Plus size={14} />
           </IconButton>
           <div className="w-5 h-px bg-ocean-800 mx-auto" aria-hidden="true" />
-          <IconButton onClick={mapZoomOut} label="Zoom out" className="glass-chrome">
+          <IconButton onClick={mapZoomOut} label="Zoom out" className="glass-chrome !text-yellow-300 hover:!text-yellow-200">
             <Minus size={14} />
           </IconButton>
         </div>
@@ -122,7 +122,7 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
           onClick={() => setLayersPanelOpen(!layersPanelOpen)}
           label="Map Layers"
           active={layersPanelOpen}
-          className="glass-chrome shadow-glass"
+          className="glass-chrome shadow-glass !text-yellow-300 hover:!text-yellow-200"
         >
           <Layers size={14} />
         </IconButton>
@@ -199,7 +199,7 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
           onClick={() => setDotMenuOpen(v => !v)}
           label="Map actions"
           active={dotMenuOpen}
-          className="glass-chrome"
+          className="glass-chrome !text-yellow-300 hover:!text-yellow-200"
         >
           <MoreHorizontal size={14} />
         </IconButton>
@@ -244,8 +244,8 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
 
       {/* Status badges — top-centre */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex gap-3 pointer-events-none">
-        <div className="glass-pill px-10 py-1.5 rounded-full pointer-events-auto flex flex-col items-center justify-center bg-ocean-950/60 backdrop-blur-xl shadow-md border border-white/10 text-center">
-          <span className="font-mono text-sm text-yellow-300 font-bold tracking-widest">
+        <div className="glass-pill px-4 py-1 rounded-2xl pointer-events-auto flex flex-col items-center justify-center bg-ocean-950/60 backdrop-blur-xl shadow-md border border-white/10 text-center w-max">
+          <span className="font-mono text-[10px] text-yellow-300 font-bold tracking-widest">
             {isLive
               ? (liveData.lastUpdated
                   ? `FRAME CAPTURED: ${formatIST(liveData.lastUpdated)}`
@@ -253,14 +253,14 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
               : (obs ? formatIST(obs.timestamp) : '...')}
           </span>
           {isLive && liveData.lastUpdated && (
-             <span className="font-mono text-xs text-yellow-300/80 font-semibold tracking-widest mt-0.5">
+             <span className="font-mono text-[9px] text-yellow-300/80 font-semibold tracking-widest mt-0.5">
                NEXT UPCOMING: {formatIST(addHoursToISO(liveData.lastUpdated, 1))}
              </span>
           )}
         </div>
 
-        <div className="glass-pill px-10 py-1.5 rounded-full pointer-events-auto flex items-center justify-center bg-ocean-950/60 backdrop-blur-xl shadow-md border border-white/10 text-center">
-          <span className="font-sans text-sm text-yellow-300 font-bold tracking-widest uppercase">SRC: NASA GIBS</span>
+        <div className="glass-pill px-4 py-1 rounded-2xl pointer-events-auto flex items-center justify-center bg-ocean-950/60 backdrop-blur-xl shadow-md border border-white/10 text-center w-max">
+          <span className="font-sans text-[10px] text-yellow-300 font-bold tracking-widest uppercase">SRC: NASA GIBS</span>
         </div>
       </div>
 
