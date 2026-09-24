@@ -41,9 +41,9 @@ export function SideNav() {
           <img src="/logo.png" alt="CycloneWatch Logo" className="w-full h-full object-cover" />
         </div>
         {!sidebarCollapsed && (
-          <div className="flex flex-col min-w-0">
-            <span className="text-white font-bold tracking-wide text-sm truncate">CycloneWatch</span>
-            <span className="text-xs text-cyan-400/80 uppercase tracking-widest">AI-Powered Tracker</span>
+          <div className="min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
+            <span className="text-white font-bold tracking-wide text-base">CycloneWatch</span>
+            <sub className="text-[9px] text-cyan-400/80 uppercase tracking-widest ml-1">AI-Powered Tracker</sub>
           </div>
         )}
       </div>
