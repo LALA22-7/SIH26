@@ -5,6 +5,7 @@ import L from 'leaflet';
 import { useCycloneStore } from '../../store/useCycloneStore';
 import { INDIA_BOUNDS, INDIA_CENTER, DEFAULT_ZOOM, MIN_ZOOM, MAX_ZOOM } from './mapConstants';
 import { registerMap } from './mapHelpers';
+import { extractDateStr } from '../../lib/formatting';
 
 // ── Custom icons ────────────────────────────────────────────────────────────
 const CycloneCentreIcon = L.divIcon({
@@ -40,14 +41,15 @@ export interface LayerVisibility {
 }
 
 // ── Internal component that can access the map instance ─────────────────────
-interface MapControllerProps {
-  onMapReady: (map: L.Map) => void;
-}
-function MapController({ onMapReady }: MapControllerProps) {
+function MapController({ onMapReady }: { onMapReady: (map: L.Map) => void }) {
   const map = useMap();
   useEffect(() => { onMapReady(map); }, [map, onMapReady]);
   return null;
 }
+
+// ── Constants ───────────────────────────────────────────────────────────────
+const CYCLONE_STRUCTURE_RADIUS_M = 220_000;
+const DEFAULT_UNCERTAINTY_RADIUS_M = 85_000;
 
 // ── Main component ───────────────────────────────────────────────────────────
 interface LeafletMapProps {
@@ -75,14 +77,16 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
     } else {
       map.flyTo(INDIA_CENTER, DEFAULT_ZOOM, { duration: 1.2, easeLinearity: 0.25 });
     }
-  }, [mode, activeEventId]); // Only fly on event switch, not every timeline step
+    // Only fly on event switch, not every timeline step
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, activeEventId]);
 
   // Build the historical track coordinates up to current timeline index
   const trackCoords: [number, number][] = [];
   if (mode === 'HISTORICAL' && apiClassificationsData?.classifications) {
     for (let i = 0; i <= timelineIndex; i++) {
       const c = apiClassificationsData.classifications[i];
-      if (c && c.center) {
+      if (c?.center) {
         trackCoords.push([c.center.lat, c.center.lon]);
       }
     }
@@ -91,7 +95,7 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
   // Build the forecast coords for this specific step (t12, t24)
   const forecastCoords: [number, number][] = [];
   if (mode === 'HISTORICAL' && obs?.step?.prediction) {
-    forecastCoords.push([obs.lat, obs.lng]); // Start at current center
+    forecastCoords.push([obs.lat, obs.lng]);
     if (obs.step.prediction.t12?.center) {
       forecastCoords.push([obs.step.prediction.t12.center.lat, obs.step.prediction.t12.center.lon]);
     }
@@ -99,22 +103,17 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
       forecastCoords.push([obs.step.prediction.t24.center.lat, obs.step.prediction.t24.center.lon]);
     }
   }
-  
-  // Try to parse uncertainty geometry if the backend provided it
-  // Collect unique dates for pre-caching to prevent stitches/flickering
-  const uniqueDates = useMemo(() => {
-    if (mode !== 'HISTORICAL' || !apiClassificationsData?.classifications) return [];
-    const dates = new Set<string>();
-    apiClassificationsData.classifications.forEach((c: any) => {
-      if (c.timestamp) dates.add(c.timestamp.split('T')[0]);
-    });
-    return Array.from(dates);
-  }, [mode, apiClassificationsData]);
 
-  const currentDateStr = obs?.timestamp?.split('T')[0];
-  const liveDateStr = new Date().toISOString().split('T')[0];
+  // Only render the GIBS layer for the CURRENT date (not all dates)
+  // This fixes the N-simultaneous-TileLayer anti-pattern
+  const currentDateStr = useMemo(() => {
+    if (mode === 'HISTORICAL' && obs?.timestamp) {
+      return extractDateStr(obs.timestamp);
+    }
+    return new Date().toISOString().split('T')[0];
+  }, [mode, obs?.timestamp]);
 
-  let uncertaintyRadiusM = 85_000; 
+  let uncertaintyRadiusM = DEFAULT_UNCERTAINTY_RADIUS_M;
   if (mode === 'HISTORICAL' && obs?.step?.errors?.t24_km) {
     uncertaintyRadiusM = obs.step.errors.t24_km * 1000;
   }
@@ -135,7 +134,7 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
       >
         <MapController onMapReady={handleMapReady} />
 
-        {/* Esri Base Layer (toggled with satellite) */}
+        {/* Esri Base Layer */}
         {layers.satellite && (
           <TileLayer
             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -145,26 +144,15 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
           />
         )}
 
-        {/* NASA GIBS Cloud Layer (Historical) - Precached layers with opacity crossfade */}
-        {mode === 'HISTORICAL' && layers.satellite && uniqueDates.map(dateStr => (
+        {/* NASA GIBS Cloud Layer — single date only (performance fix) */}
+        {layers.satellite && (
           <TileLayer
-            key={dateStr}
-            url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`}
-            opacity={dateStr === currentDateStr ? 0.75 : 0}
+            key={currentDateStr}
+            url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${currentDateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`}
+            opacity={0.75}
             zIndex={2}
-            className="cloud-layer"
+            className="cloud-layer-tile"
           />
-        ))}
-
-        {/* Live mode static (latest available) */}
-        {mode === 'LIVE' && layers.satellite && (
-           <TileLayer
-             key={liveDateStr}
-             url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${liveDateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`}
-             opacity={0.75}
-             zIndex={2}
-             className="cloud-layer"
-           />
         )}
 
         {mode === 'HISTORICAL' && obs && (
@@ -201,7 +189,7 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
             {layers.structure && (
               <Circle
                 center={[obs.lat, obs.lng]}
-                radius={220_000}
+                radius={CYCLONE_STRUCTURE_RADIUS_M}
                 pathOptions={{
                   color: '#4FC3E0', weight: 0,
                   fillColor: '#4FC3E0', fillOpacity: 0.10,
@@ -220,36 +208,16 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
           </>
         )}
 
-        {/* ── Live mode centre indicator ── */}
+        {/* Live mode centre indicator */}
         {mode === 'LIVE' && layers.centre && liveData.cyclone.active && liveData.cyclone.lat && liveData.cyclone.lng && (
           <Marker
             position={[liveData.cyclone.lat, liveData.cyclone.lng]}
             icon={LiveCentreIcon}
           />
         )}
-
       </MapContainer>
 
-      {/* Leaflet CSS overrides */}
-      <style>{`
-        .leaflet-container { background: #080e18 !important; }
-        .base-tiles        { filter: brightness(0.65) contrast(1.1) saturate(0.75) !important; }
-        .cloud-layer       { 
-          filter: contrast(1.1) brightness(1.1) !important; 
-          transition: opacity 0.4s ease-in-out !important; 
-        }
-        .leaflet-pane      { z-index: auto !important; }
-        .leaflet-top, .leaflet-bottom { z-index: 10 !important; }
-        
-        @keyframes pulse-ring {
-          0%   { transform: scale(0.4); opacity: 0.9; }
-          100% { transform: scale(2.4); opacity: 0;   }
-        }
-        @keyframes cloud-drift {
-          0%   { transform: translate3d(0px, 0px, 0); }
-          100% { transform: translate3d(-150px, 50px, 0); }
-        }
-      `}</style>
+      {/* All Leaflet CSS overrides moved to index.css — no inline <style> needed */}
     </div>
   );
 }

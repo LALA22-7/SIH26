@@ -43,13 +43,13 @@ export function SideNav() {
         {!sidebarCollapsed && (
           <div className="flex flex-col min-w-0">
             <span className="text-white font-bold tracking-wide text-sm truncate">CycloneWatch</span>
-            <span className="text-[9px] text-cyan-400/80 uppercase tracking-widest">AI-Powered Tracker</span>
+            <span className="text-xs text-cyan-400/80 uppercase tracking-widest">AI-Powered Tracker</span>
           </div>
         )}
       </div>
 
       {/* Nav Links */}
-      <div className="flex-1 flex flex-col gap-1.5">
+      <div className="flex-1 flex flex-col gap-1.5" role="list">
         {navItems.map((item) => {
           const isActive = activePage === item.id;
           return (
@@ -57,6 +57,7 @@ export function SideNav() {
               key={item.id}
               onClick={() => handleNav(item)}
               title={sidebarCollapsed ? item.label : undefined}
+              aria-current={isActive ? 'page' : undefined}
               className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'} rounded-xl transition-all duration-200 ${
                 isActive
                   ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]'
@@ -76,8 +77,8 @@ export function SideNav() {
       <div className="mt-auto hidden lg:block">
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-text-muted hover:text-text-primary hover:bg-ocean-800/50 transition-all w-full"
-          title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
           {!sidebarCollapsed && <span className="text-sm font-medium">Collapse</span>}
@@ -91,6 +92,7 @@ export function SideNav() {
       {/* Mobile hamburger button */}
       <button
         onClick={() => setMobileOpen(true)}
+        aria-label="Open navigation menu"
         className="fixed top-4 left-4 z-50 lg:hidden w-10 h-10 rounded-xl glass-chrome flex items-center justify-center text-text-muted hover:text-text-primary transition-colors"
       >
         <Menu size={20} />
@@ -98,12 +100,17 @@ export function SideNav() {
 
       {/* Mobile overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setMobileOpen(false)} />
+        <div
+          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
       )}
 
-      {/* Sidebar — mobile: overlay drawer, desktop: inline */}
+      {/* Sidebar */}
       <nav
         ref={navRef}
+        aria-label="Main navigation"
         className={`
           ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-56'}
           fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto
@@ -116,6 +123,7 @@ export function SideNav() {
         {/* Mobile close button */}
         <button
           onClick={() => setMobileOpen(false)}
+          aria-label="Close navigation menu"
           className="absolute top-4 right-4 lg:hidden text-text-muted hover:text-text-primary"
         >
           <X size={20} />

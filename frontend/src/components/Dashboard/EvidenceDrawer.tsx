@@ -2,6 +2,7 @@ import { X, Satellite, Clock, Hash, MapPin, Brain, Database, AlertTriangle } fro
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCycloneStore } from '../../store/useCycloneStore';
 import { CYCLONES, PATTERN_LABELS, PATTERN_COLORS } from '../../data/cyclones';
+import { formatIST, extractDateStr } from '../../lib/formatting';
 
 interface EvidenceDrawerProps {
   open: boolean;
@@ -17,10 +18,10 @@ function Row({ icon, label, value, mono = false, highlight }: {
 }) {
   return (
     <div className="flex items-start gap-3 py-2.5 border-b border-ocean-800 last:border-b-0">
-      <span className="text-text-faint flex-shrink-0 mt-0.5">{icon}</span>
+      <span className="text-text-faint flex-shrink-0 mt-0.5" aria-hidden="true">{icon}</span>
       <div className="flex-1 min-w-0">
         <p className="metric-label mb-0.5">{label}</p>
-        <p className={`text-[11px] break-words ${mono ? 'font-mono' : ''} ${highlight ?? 'text-text-secondary'}`}>
+        <p className={`text-xs break-words ${mono ? 'font-mono' : ''} ${highlight ?? 'text-text-secondary'}`}>
           {value}
         </p>
       </div>
@@ -37,18 +38,13 @@ export function EvidenceDrawer({ open, onClose }: EvidenceDrawerProps) {
 
   const { classification, step } = obs;
   const patternLabel   = classification.pattern.label;
-  const patternConf    = classification.pattern.confidence ? (classification.pattern.confidence * 100).toFixed(1) : 0;
+  const patternConf    = classification.pattern.confidence ? (classification.pattern.confidence * 100).toFixed(1) : '0';
   const patternColor   = PATTERN_COLORS[patternLabel] ?? '#6495ED';
 
   const frameId = mode === 'HISTORICAL'
     ? step.observation_frame
     : 'live_frame';
 
-  const formatIST = (isoString: string) => {
-    if (!isoString) return '';
-    const date = new Date(isoString);
-    return date.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' IST';
-  };
   const obsTime = formatIST(obs.timestamp);
 
   return (
@@ -64,16 +60,19 @@ export function EvidenceDrawer({ open, onClose }: EvidenceDrawerProps) {
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-40 bg-ocean-950/60 backdrop-blur-sm"
             onClick={onClose}
+            aria-hidden="true"
           />
 
           {/* Drawer panel */}
-          <motion.div
+          <motion.aside
             key="drawer"
             initial={{ x: 360, opacity: 0 }}
             animate={{ x: 0,   opacity: 1 }}
             exit={{ x: 360,    opacity: 0 }}
             transition={{ type: 'spring', stiffness: 320, damping: 32 }}
             className="fixed top-0 right-0 h-full w-[340px] z-50 flex flex-col glass-panel border-l border-ocean-800 shadow-glass overflow-hidden"
+            role="dialog"
+            aria-label="Evidence drawer — source provenance"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-ocean-800 flex-shrink-0">
@@ -83,6 +82,7 @@ export function EvidenceDrawer({ open, onClose }: EvidenceDrawerProps) {
               </div>
               <button
                 onClick={onClose}
+                aria-label="Close evidence drawer"
                 className="w-8 h-8 rounded-lg bg-ocean-800 flex items-center justify-center text-text-muted hover:text-text-primary transition-colors"
               >
                 <X size={14} />
@@ -91,30 +91,30 @@ export function EvidenceDrawer({ open, onClose }: EvidenceDrawerProps) {
 
             {/* Satellite image placeholder */}
             <div className="mx-5 mt-4 mb-3 h-36 rounded-xl border border-ocean-800 overflow-hidden relative flex-shrink-0">
-              {/* Simulated IR cloud structure */}
               <div className="absolute inset-0"
                 style={{
                   background: `radial-gradient(circle at 45% 45%,
                     rgba(255,122,69,0.18) 0%,
                     rgba(79,195,224,0.10) 30%,
                     rgba(10,18,28,1) 70%)`,
-                }} />
+                }}
+                aria-hidden="true"
+              />
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <Satellite size={20} className="text-ocean-750 mb-1" />
-                <p className="text-[9px] font-mono text-text-faint tracking-widest">HISTORICAL SATELLITE IMAGERY</p>
-                <p className="text-[8px] text-text-faint opacity-60 mt-0.5">
-                  {obs.timestamp.split('T')[0]} · {activeCycloneMeta.name}
+                <Satellite size={20} className="text-ocean-750 mb-1" aria-hidden="true" />
+                <p className="text-xs font-mono text-text-faint tracking-widest">HISTORICAL SATELLITE IMAGERY</p>
+                <p className="text-xs text-text-faint opacity-60 mt-0.5">
+                  {extractDateStr(obs.timestamp)} · {activeCycloneMeta.name}
                 </p>
               </div>
-              {/* Channel color strip */}
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-ir/50" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-ir/50" aria-hidden="true" />
             </div>
 
             {/* Pattern summary */}
             <div className="mx-5 mb-3 flex-shrink-0">
               <div className="glass-card rounded-xl px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ background: patternColor, boxShadow: `0 0 6px ${patternColor}` }} />
+                  <div className="w-2 h-2 rounded-full" style={{ background: patternColor, boxShadow: `0 0 6px ${patternColor}` }} aria-hidden="true" />
                   <span className="text-sm font-semibold text-text-primary">
                     {PATTERN_LABELS[patternLabel] ?? patternLabel}
                   </span>
@@ -150,14 +150,14 @@ export function EvidenceDrawer({ open, onClose }: EvidenceDrawerProps) {
               <Row icon={<Database size={12} />}    label="Normalization"
                 value="per_frame_min_max" mono />
 
-              {/* IMD gap note if applicable */}
+              {/* IMD gap note */}
               {activeCycloneMeta.imdGapCase && activeCycloneMeta.imdGapNote && (
                 <div className="mt-4 glass-card rounded-xl p-3 border border-alert/25">
                   <div className="flex gap-2">
-                    <AlertTriangle size={12} className="text-alert flex-shrink-0 mt-0.5" />
+                    <AlertTriangle size={12} className="text-alert flex-shrink-0 mt-0.5" aria-hidden="true" />
                     <div>
                       <p className="metric-label text-alert mb-1">IMD GAP CASE</p>
-                      <p className="text-[10px] text-text-muted leading-relaxed">
+                      <p className="text-xs text-text-muted leading-relaxed">
                         {activeCycloneMeta.imdGapNote}
                       </p>
                     </div>
@@ -167,13 +167,13 @@ export function EvidenceDrawer({ open, onClose }: EvidenceDrawerProps) {
 
               {/* Disclaimer */}
               <div className="mt-4 px-3 py-2.5 rounded-lg bg-ocean-850 border border-ocean-800">
-                <p className="text-[9px] text-text-faint leading-relaxed">
+                <p className="text-xs text-text-faint leading-relaxed">
                   Confidence score is model-derived. Not yet calibrated against held-out coverage.
                   Calibrated version arrives Day 6. Do not present as a measured probability.
                 </p>
               </div>
             </div>
-          </motion.div>
+          </motion.aside>
         </>
       )}
     </AnimatePresence>

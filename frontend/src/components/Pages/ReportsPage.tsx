@@ -59,7 +59,7 @@ export function ReportsPage() {
         <section className="text-center mb-4">
           <h1 className="text-3xl font-bold text-white mb-3">Cyclone Reports</h1>
           <p className="text-text-secondary text-sm max-w-2xl mx-auto leading-relaxed">
-            Detailed analysis of the 7 historical cyclones in our database — the destruction they caused 
+            Detailed analysis of the 7 historical cyclones in our database — the destruction they caused
             and how CycloneWatch's early detection could have made a difference.
           </p>
         </section>
@@ -70,7 +70,7 @@ export function ReportsPage() {
           const destruction = DESTRUCTION_DATA[cyclone.id];
 
           return (
-            <div
+            <article
               key={cyclone.id}
               className={`glass-card rounded-2xl overflow-hidden border transition-all duration-300 ${
                 isExpanded ? 'border-cyan-500/30 shadow-[0_0_20px_rgba(79,195,224,0.1)]' : 'border-ocean-800'
@@ -79,26 +79,28 @@ export function ReportsPage() {
               {/* Header — always visible */}
               <button
                 onClick={() => setExpandedId(isExpanded ? null : cyclone.id)}
+                aria-expanded={isExpanded}
+                aria-controls={`report-${cyclone.id}`}
                 className="w-full flex items-center justify-between p-5 hover:bg-ocean-800/30 transition-colors text-left"
               >
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold ${
-                    cyclone.basin === 'Arabian Sea' 
+                    cyclone.basin === 'Arabian Sea'
                       ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
                       : 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
-                  }`}>
+                  }`} aria-hidden="true">
                     {cyclone.name.charAt(0)}
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-white tracking-wide">{cyclone.name}</h3>
-                    <p className="text-[11px] text-text-muted mt-0.5">
+                    <p className="text-xs text-text-muted mt-0.5">
                       {cyclone.year} · {cyclone.basin} · Landfall: {cyclone.landfallRegion}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   {cyclone.imdGapCase && (
-                    <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-bold tracking-widest uppercase bg-alert/10 text-alert border border-alert/25">
+                    <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold tracking-widest uppercase bg-alert/10 text-alert border border-alert/25">
                       IMD GAP CASE
                     </span>
                   )}
@@ -108,7 +110,7 @@ export function ReportsPage() {
 
               {/* Expanded content */}
               {isExpanded && (
-                <div className="px-5 pb-6 flex flex-col gap-5 border-t border-ocean-800 pt-5">
+                <div id={`report-${cyclone.id}`} className="px-5 pb-6 flex flex-col gap-5 border-t border-ocean-800 pt-5">
                   {/* Stats grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {[
@@ -118,9 +120,9 @@ export function ReportsPage() {
                       { icon: Calendar, label: 'Year', value: `${cyclone.year}`, color: 'text-text-primary' },
                     ].map((stat, i) => (
                       <div key={i} className="flex flex-col items-center p-3 rounded-xl bg-ocean-900/50 border border-ocean-800">
-                        <stat.icon size={16} className="text-text-muted mb-1" />
+                        <stat.icon size={16} className="text-text-muted mb-1" aria-hidden="true" />
                         <span className={`text-lg font-bold font-mono ${stat.color}`}>{stat.value}</span>
-                        <span className="text-[9px] text-text-faint uppercase tracking-widest">{stat.label}</span>
+                        <span className="text-xs text-text-faint uppercase tracking-widest">{stat.label}</span>
                       </div>
                     ))}
                   </div>
@@ -129,24 +131,24 @@ export function ReportsPage() {
                   {destruction && (
                     <div className="rounded-xl p-5 bg-alert/5 border border-alert/20">
                       <div className="flex items-center gap-2 mb-3">
-                        <AlertTriangle size={16} className="text-alert" />
+                        <AlertTriangle size={16} className="text-alert" aria-hidden="true" />
                         <h4 className="text-sm font-bold text-alert tracking-widest uppercase">Destruction Caused</h4>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                         <div>
-                          <span className="text-[9px] text-text-faint uppercase tracking-widest block">Deaths</span>
+                          <span className="text-xs text-text-faint uppercase tracking-widest block">Deaths</span>
                           <span className="text-sm text-alert font-semibold">{destruction.deaths}</span>
                         </div>
                         <div>
-                          <span className="text-[9px] text-text-faint uppercase tracking-widest block">Economic Damage</span>
+                          <span className="text-xs text-text-faint uppercase tracking-widest block">Economic Damage</span>
                           <span className="text-sm text-white font-semibold">{destruction.damage}</span>
                         </div>
                         <div>
-                          <span className="text-[9px] text-text-faint uppercase tracking-widest block">People Affected</span>
+                          <span className="text-xs text-text-faint uppercase tracking-widest block">People Affected</span>
                           <span className="text-sm text-text-secondary font-semibold">{destruction.affected}</span>
                         </div>
                       </div>
-                      <p className="text-text-secondary text-[12px] leading-relaxed">{destruction.summary}</p>
+                      <p className="text-text-secondary text-xs leading-relaxed">{destruction.summary}</p>
                     </div>
                   )}
 
@@ -154,22 +156,22 @@ export function ReportsPage() {
                   {cyclone.imdGapNote && (
                     <div className="rounded-xl p-5 bg-cyan-500/5 border border-cyan-500/20">
                       <div className="flex items-center gap-2 mb-3">
-                        <Lightbulb size={16} className="text-cyan-400" />
+                        <Lightbulb size={16} className="text-cyan-400" aria-hidden="true" />
                         <h4 className="text-sm font-bold text-cyan-400 tracking-widest uppercase">What if CycloneWatch Existed?</h4>
                       </div>
-                      <p className="text-text-secondary text-[12px] leading-relaxed">
+                      <p className="text-text-secondary text-xs leading-relaxed">
                         {cyclone.imdGapNote}
                       </p>
-                      <p className="text-text-muted text-[11px] mt-3 italic">
-                        In simple terms: Our AI would have spotted the storm's dangerous structural changes in satellite images 
-                        <span className="text-cyan-400 font-semibold"> hours before the official warnings</span> were issued, 
+                      <p className="text-text-muted text-xs mt-3 italic">
+                        In simple terms: Our AI would have spotted the storm's dangerous structural changes in satellite images
+                        <span className="text-cyan-400 font-semibold"> hours before the official warnings</span> were issued,
                         giving emergency responders and coastal communities more time to evacuate and prepare.
                       </p>
                     </div>
                   )}
                 </div>
               )}
-            </div>
+            </article>
           );
         })}
 
