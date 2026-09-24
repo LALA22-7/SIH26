@@ -131,3 +131,8 @@ data/raw/download_manifest.csv
 
 # ── Nested repositories ───────────────────────────────
 SIH26_ps77/
+
+# ── Brag / Hyperframes video output ──────────────────
+brag-output-*/
+.agents/
+skills-lock.json

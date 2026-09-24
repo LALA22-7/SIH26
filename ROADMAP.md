@@ -23,6 +23,13 @@ These items have been implemented and are live in the current codebase:
 | **Coastline API Endpoint** | New `backend/app/api/coastline.py` router wired into main.py |
 | **Reports API Endpoint** | New `backend/app/api/reports.py` for ground destruction reports |
 | **Replay Source Parameter** | `/api/replay/{event_id}?source=nasa|isro` toggle ready |
+| **Glass-Chrome Map Controls** | Frosted-glass backgrounds with backdrop blur on all map control panels |
+| **Lemon Yellow UI Theme** | All map controls, icons (+/−/layers/options), and layer panel text use `#facc15` lemon yellow for 100% visibility on dark backgrounds |
+| **Status Badge Resize** | Top-center status badges reduced ~30% for a sleeker, less intrusive "pill" appearance |
+| **Conveyor Belt Timeline** | Historical timeline scrubber with hold-to-scroll left/right chevron buttons using `requestAnimationFrame` for smooth continuous scrolling |
+| **Historical Timeline Styling** | Timeline dates section resized −20%, fonts changed to lemon yellow to match live map theme |
+| **Branding Update** | "CycloneWatch" text increased +1pt, "AI-Powered Tracker" reduced −3pt and styled as subscript |
+| **Cyclone Track Visibility** | Leaflet geometry paths updated to high-visibility lemon yellow (`#facc15`) |
 
 ---
 

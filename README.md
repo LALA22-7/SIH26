@@ -71,11 +71,12 @@ SIH26/
 │       ├── store/useCycloneStore.ts # Zustand state manager
 │       ├── data/cyclones.ts       # Cyclone metadata & pattern taxonomy
 │       └── components/
-│           ├── Navigation/SideNav.tsx   # Left sidebar navigation with logo
+│           ├── Navigation/SideNav.tsx   # Left sidebar (CycloneWatch branding, subscript tagline)
 │           ├── Dashboard/
 │           │   ├── MetricsPanel.tsx     # Right-side metrics (dynamic coast dist, TTI)
 │           │   ├── EvidenceDrawer.tsx   # Source provenance slide-out
-│           │   ├── Timeline.tsx         # Historical frame scrubber (IST)
+│           │   ├── SatellitePanel.tsx   # Map controls (glass-chrome, lemon yellow UI)
+│           │   ├── Timeline.tsx         # Conveyor-belt timeline scrubber with hold-to-scroll
 │           │   └── LeafletMap.tsx       # Map with trajectory, IR GIBS, cloud-drift
 │           └── IntroAnimation.tsx      # Splash screen animation
 │
@@ -83,6 +84,7 @@ SIH26/
 ├── scripts/           # Data pipeline scripts (download, standardize, label, validate)
 │
 ├── docs/              # Technical documentation
+│   ├── workflow_methodology.md   # Workflow & methodology flowchart (for PPT)
 │   ├── future_implementation.md  # Detailed future implementation plan
 │   ├── taxonomy.md               # The 5-class morphology taxonomy
 │   ├── metrics_explained.md      # Dashboard metric definitions
@@ -290,6 +292,7 @@ Satellite Data (INSAT/GridSat-B1)
 |-------|---------|
 | Non-technical full project explainer | [PROJECT_EXPLAINER.md](PROJECT_EXPLAINER.md) |
 | **Future roadmap (what's next)** | [**ROADMAP.md**](ROADMAP.md) |
+| **Workflow & methodology flowchart** | [**docs/workflow_methodology.md**](docs/workflow_methodology.md) |
 | Detailed future implementation plan | [docs/future_implementation.md](docs/future_implementation.md) |
 | The 5-class pattern taxonomy | [docs/taxonomy.md](docs/taxonomy.md) |
 | Dashboard metric definitions | [docs/metrics_explained.md](docs/metrics_explained.md) |
