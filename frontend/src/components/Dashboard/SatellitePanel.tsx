@@ -134,15 +134,15 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: -6, scale: 0.96 }}
               transition={{ duration: 0.15 }}
-              className="absolute top-0 left-10 w-52 glass-chrome rounded-xl p-3 shadow-glass border border-white/10 bg-ocean-950/40 backdrop-blur-md"
+              className="absolute top-0 left-10 w-52 glass-chrome rounded-xl p-3 shadow-glass border border-white/10 bg-ocean-950/60 backdrop-blur-xl"
               role="group"
               aria-label="Map layer controls"
             >
-              <div className="metric-label text-text-primary mb-3 pb-2 border-b border-ocean-800">
+              <div className="metric-label text-yellow-300 mb-3 pb-2 border-b border-ocean-800 text-center">
                 MAP LAYERS
               </div>
 
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 items-center w-full">
                 {LAYER_DEFS.map((def) => {
                   let available = def.alwaysAvailable || mode === 'HISTORICAL';
                   if (mode === 'HISTORICAL' && (def.key === 'wind' || def.key === 'ocean')) {
@@ -154,19 +154,19 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
                       onClick={() => available && toggleLayer(def.key)}
                       disabled={!available}
                       aria-pressed={layers[def.key] && available}
-                      className={`flex items-center justify-between px-2 py-1.5 rounded-lg transition-colors
+                      className={`flex flex-col items-center justify-center w-full py-1.5 rounded-lg transition-colors
                         ${available ? 'hover:bg-ocean-800/80 cursor-pointer' : 'opacity-35 cursor-not-allowed'}
                       `}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className={`transition-colors ${layers[def.key] && available ? 'text-blue-400' : 'text-text-secondary'}`}>{def.icon}</span>
-                        <span className={`text-xs font-medium ${layers[def.key] && available ? 'text-white' : 'text-text-primary'}`}>{def.label}</span>
+                      <div className="flex items-center gap-2 mb-1 justify-center w-full">
+                        <span className={`transition-colors ${layers[def.key] && available ? 'text-yellow-300' : 'text-yellow-300/50'}`}>{def.icon}</span>
+                        <span className={`text-xs font-medium ${layers[def.key] && available ? 'text-yellow-300' : 'text-yellow-300/70'}`}>{def.label}</span>
                       </div>
-                      <div className={`w-7 h-4 rounded-full relative transition-colors border ${
-                        layers[def.key] && available ? 'bg-blue-500/20 border-blue-500/50' : 'bg-ocean-800 border-ocean-700'
+                      <div className={`w-10 h-2.5 rounded-full relative transition-colors border ${
+                        layers[def.key] && available ? 'bg-yellow-500/20 border-yellow-500/50' : 'bg-ocean-800 border-ocean-700'
                       }`} aria-hidden="true">
-                        <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white transition-all ${
-                          layers[def.key] && available ? 'left-[15px] shadow-[0_0_5px_rgba(255,255,255,0.8)]' : 'left-1 opacity-50'
+                        <div className={`absolute -top-0.5 w-3.5 h-3.5 rounded-full bg-yellow-300 transition-all ${
+                          layers[def.key] && available ? 'left-[26px] shadow-[0_0_5px_rgba(250,250,51,0.8)]' : 'left-0 opacity-50 bg-gray-400'
                         }`} />
                       </div>
                     </button>
@@ -181,7 +181,7 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
                     key={p}
                     onClick={() => setLayers(PRESETS[p])}
                     className="text-xs font-bold tracking-wide py-1.5 px-1 rounded-md
-                      bg-ocean-900 text-text-primary hover:bg-ocean-800 border border-white/5
+                      bg-ocean-900 text-yellow-300 hover:bg-ocean-800 border border-white/5
                       transition-colors leading-tight text-center"
                   >
                     {p === 'CYCLONE_VIEW' ? 'ALL' : p === 'TRAJECTORY_ONLY' ? 'TRACK' : 'NONE'}
@@ -211,7 +211,7 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 6, scale: 0.96 }}
               transition={{ duration: 0.15 }}
-              className="absolute bottom-10 right-0 w-48 glass-chrome rounded-xl p-1.5 shadow-glass"
+              className="absolute bottom-10 right-0 w-48 glass-chrome rounded-xl p-1.5 shadow-glass bg-ocean-950/60 backdrop-blur-xl"
               role="menu"
             >
               {[
@@ -230,7 +230,7 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
                   role="menuitem"
                   onClick={() => { item.action(); setDotMenuOpen(false); }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg
-                    text-text-muted hover:text-text-primary hover:bg-ocean-850
+                    text-yellow-300/80 hover:text-yellow-300 hover:bg-ocean-850
                     transition-colors text-left"
                 >
                   <span className="flex-shrink-0" aria-hidden="true">{item.icon}</span>
@@ -244,8 +244,8 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
 
       {/* Status badges — top-centre */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex gap-3 pointer-events-none">
-        <div className="glass-pill px-5 py-2.5 rounded-full pointer-events-auto flex flex-col items-center bg-ocean-900/60 shadow-md">
-          <span className="font-mono text-sm text-white font-bold tracking-widest">
+        <div className="glass-pill px-10 py-1.5 rounded-full pointer-events-auto flex flex-col items-center justify-center bg-ocean-950/60 backdrop-blur-xl shadow-md border border-white/10 text-center">
+          <span className="font-mono text-sm text-yellow-300 font-bold tracking-widest">
             {isLive
               ? (liveData.lastUpdated
                   ? `FRAME CAPTURED: ${formatIST(liveData.lastUpdated)}`
@@ -253,14 +253,14 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
               : (obs ? formatIST(obs.timestamp) : '...')}
           </span>
           {isLive && liveData.lastUpdated && (
-             <span className="font-mono text-xs text-[#E7EEF4] font-semibold tracking-widest mt-1">
+             <span className="font-mono text-xs text-yellow-300/80 font-semibold tracking-widest mt-0.5">
                NEXT UPCOMING: {formatIST(addHoursToISO(liveData.lastUpdated, 1))}
              </span>
           )}
         </div>
 
-        <div className="glass-pill px-5 py-2.5 rounded-full pointer-events-auto flex items-center bg-ocean-900/60 shadow-md">
-          <span className="font-sans text-sm text-white font-bold tracking-widest uppercase">SRC: NASA GIBS</span>
+        <div className="glass-pill px-10 py-1.5 rounded-full pointer-events-auto flex items-center justify-center bg-ocean-950/60 backdrop-blur-xl shadow-md border border-white/10 text-center">
+          <span className="font-sans text-sm text-yellow-300 font-bold tracking-widest uppercase">SRC: NASA GIBS</span>
         </div>
       </div>
 

@@ -161,7 +161,7 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
             {layers.trajectory && trackCoords.length > 1 && (
               <Polyline
                 positions={trackCoords}
-                pathOptions={{ color: '#E7EEF4', weight: 2, opacity: 0.85 }}
+                pathOptions={{ color: '#facc15', weight: 4, opacity: 1.0 }}
               />
             )}
 
@@ -169,7 +169,7 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
             {layers.forecastTrack && forecastCoords.length > 1 && (
               <Polyline
                 positions={forecastCoords}
-                pathOptions={{ color: '#FF7A45', weight: 2, dashArray: '5, 7', opacity: 0.75 }}
+                pathOptions={{ color: '#facc15', weight: 4, dashArray: '5, 7', opacity: 1.0 }}
               />
             )}
 
@@ -179,8 +179,8 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
                 center={forecastCoords.at(-1)!}
                 radius={uncertaintyRadiusM}
                 pathOptions={{
-                  color: '#FF7A45', weight: 1, dashArray: '3, 5',
-                  fillColor: '#FF7A45', fillOpacity: 0.07,
+                  color: '#facc15', weight: 2, dashArray: '3, 5',
+                  fillColor: '#facc15', fillOpacity: 0.3,
                 }}
               />
             )}
@@ -191,8 +191,8 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
                 center={[obs.lat, obs.lng]}
                 radius={CYCLONE_STRUCTURE_RADIUS_M}
                 pathOptions={{
-                  color: '#4FC3E0', weight: 0,
-                  fillColor: '#4FC3E0', fillOpacity: 0.10,
+                  color: '#facc15', weight: 2,
+                  fillColor: '#facc15', fillOpacity: 0.3,
                 }}
               />
             )}
