@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  Plus, Minus, Radio, MoreHorizontal,
+  Plus, Minus, MoreHorizontal,
   Navigation, Maximize2, Database, Clock,
   Eye, Wind, Waves, Map, GitBranch, Triangle, Layers
 } from 'lucide-react';
@@ -9,7 +9,6 @@ import { LeafletMap } from './LeafletMap';
 import { mapResetView, mapFitBounds, mapFitTrack, mapZoomIn, mapZoomOut } from './mapHelpers';
 import { Timeline } from './Timeline';
 import { useCycloneStore } from '../../store/useCycloneStore';
-import { CYCLONES } from '../../data/cyclones';
 import { formatIST, addHoursToISO } from '../../lib/formatting';
 import { IconButton } from '../ui';
 import type { LayerVisibility } from './LeafletMap';
@@ -49,8 +48,7 @@ const PRESETS: Record<Preset, LayerVisibility> = {
 };
 
 export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }) {
-  const { mode, getCurrentObservation, liveData, activeEventId, apiClassificationsData, timelineIndex } = useCycloneStore();
-  const activeCycloneMeta = CYCLONES.find(c => c.id === activeEventId) || CYCLONES[0];
+  const { mode, getCurrentObservation, liveData, apiClassificationsData, timelineIndex } = useCycloneStore();
   const obs = getCurrentObservation();
   const isLive = mode === 'LIVE';
 
@@ -245,31 +243,9 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
       </div>
 
       {/* Status badges — top-centre */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex gap-2 pointer-events-none">
-        {isLive ? (
-          <div className={`glass-pill flex items-center gap-2 px-3 py-1.5 rounded-full pointer-events-auto ${
-            liveData.status === 'LIVE'
-              ? 'border-green-500/40 text-green-400'
-              : 'border-amber-500/40 text-amber-400'
-          }`} role="status">
-            {liveData.status === 'LIVE' && (
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" aria-hidden="true" />
-            )}
-            <Radio size={11} className={liveData.status === 'LIVE' ? 'animate-blink' : ''} aria-hidden="true" />
-            <span className="metric-label text-current">
-              {liveData.status === 'LIVE' ? 'LIVE SATELLITE FEED'
-                : liveData.status === 'UPDATING' ? 'FETCHING SATELLITE...'
-                : 'STALE SATELLITE DATA'}
-            </span>
-          </div>
-        ) : (
-          <div className="glass-pill flex items-center gap-2 px-3 py-1.5 rounded-full text-text-primary pointer-events-auto">
-            <span className="metric-label">HISTORICAL ARCHIVE · {activeCycloneMeta.name} {activeCycloneMeta.year}</span>
-          </div>
-        )}
-
-        <div className="glass-pill px-3 py-1.5 rounded-full pointer-events-auto flex flex-col items-center">
-          <span className="font-mono text-xs text-text-primary tracking-widest">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex gap-3 pointer-events-none">
+        <div className="glass-pill px-5 py-2.5 rounded-full pointer-events-auto flex flex-col items-center bg-ocean-900/60 shadow-md">
+          <span className="font-mono text-sm text-white font-bold tracking-widest">
             {isLive
               ? (liveData.lastUpdated
                   ? `FRAME CAPTURED: ${formatIST(liveData.lastUpdated)}`
@@ -277,14 +253,14 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
               : (obs ? formatIST(obs.timestamp) : '...')}
           </span>
           {isLive && liveData.lastUpdated && (
-             <span className="font-mono text-xs text-text-muted tracking-widest mt-0.5">
+             <span className="font-mono text-xs text-[#E7EEF4] font-semibold tracking-widest mt-1">
                NEXT UPCOMING: {formatIST(addHoursToISO(liveData.lastUpdated, 1))}
              </span>
           )}
         </div>
 
-        <div className="glass-pill px-3 py-1.5 rounded-full pointer-events-auto">
-          <span className="metric-label text-text-secondary">SRC: NASA GIBS</span>
+        <div className="glass-pill px-5 py-2.5 rounded-full pointer-events-auto flex items-center bg-ocean-900/60 shadow-md">
+          <span className="font-sans text-sm text-white font-bold tracking-widest uppercase">SRC: NASA GIBS</span>
         </div>
       </div>
 
