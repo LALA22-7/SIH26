@@ -63,15 +63,9 @@ function MetricGrid({ children }: { children: React.ReactNode }) {
 // ── LIVE MODE ─────────────────────────────────────────────────────────────────
 function LiveMetrics() {
   const { liveData, liveBasin, setLiveBasin } = useCycloneStore();
-  const [now, setNow] = useState(() => Date.now());
   const [coastDist, setCoastDist] = useState<number | null>(null);
   const [timeToImpact, setTimeToImpact] = useState<number | null>(null);
   const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api';
-  
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 60000);
-    return () => clearInterval(id);
-  }, []);
 
   // Always compute coast distance from basin center (not gated on cyclone.active)
   useEffect(() => {
