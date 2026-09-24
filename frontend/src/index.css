@@ -172,6 +172,7 @@
 .leaflet-container { background: #080e18 !important; }
 .base-tiles        { filter: brightness(0.65) contrast(1.1) saturate(0.75) !important; }
 .cloud-layer-tile  {
+  mix-blend-mode: lighten !important;
   filter: contrast(1.1) brightness(1.1) !important;
   transition: opacity 0.4s ease-in-out !important;
 }
