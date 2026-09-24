@@ -202,7 +202,7 @@ export const useCycloneStore = create<CycloneState>((set, get) => ({
       set({
         liveData: {
           status:      'LIVE',
-          lastUpdated: weather.current?.time ? new Date(weather.current.time).toISOString() : new Date().toISOString(),
+          lastUpdated: new Date().toISOString(),
           atmosphere: {
             windSpeed:     weather.current?.wind_speed_10m     ?? null,
             windDirection: weather.current?.wind_direction_10m ?? null,

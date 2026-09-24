@@ -172,6 +172,7 @@ export const PATTERN_LABELS: Record<string, string> = {
   curved_band: 'Curved Band',
   shear_affected: 'Shear-Affected',
   disorganized: 'Disorganized',
+  disorganised: 'Disorganized',
   unlabeled: 'Analyzing...',
 };
 
@@ -181,5 +182,6 @@ export const PATTERN_COLORS: Record<string, string> = {
   curved_band: '#eab308',
   shear_affected: '#a855f7',
   disorganized: '#6b7280',
+  disorganised: '#6b7280',
   unlabeled: '#4FC3E0',
 };

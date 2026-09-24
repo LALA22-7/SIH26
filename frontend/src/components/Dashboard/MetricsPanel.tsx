@@ -93,7 +93,7 @@ function LiveMetrics() {
   const atmo  = liveData.atmosphere;
   const ocean = liveData.ocean;
   const lastUp = liveData.lastUpdated
-    ? 'Updated ' + Math.round((now - new Date(liveData.lastUpdated).getTime()) / 60000) + ' min ago'
+    ? 'Updated at ' + new Date(liveData.lastUpdated).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
     : 'Updating…';
 
   return (
@@ -171,7 +171,25 @@ function LiveMetrics() {
         <p className="text-[9px] text-text-faint font-mono mt-2">Source: Open-Meteo Marine · {lastUp}</p>
       </div>
 
-      {/* ── CycloneWatch ML status ── */}
+      {/* ── Impact Metrics ── */}
+      <div className="glass-card rounded-xl p-4">
+        <SectionHeader title="Impact Metrics" badge="CALCULATED" badgeVariant="ml" />
+        <MetricGrid>
+          <MetricCell label="Risk of Formation" value={
+            hasAtmo && hasOcean && ocean.sst ? Math.min(100, Math.max(0, ((ocean.sst - 26) * 15) + ((atmo.windSpeed || 0) * 0.5))).toFixed(0) : null
+          } unit="%" color={(ocean.sst && ocean.sst > 28) ? 'text-alert' : 'text-amber-400'} unavailable={!hasOcean || !hasAtmo} />
+          
+          <MetricCell label="Nearest Coast Dist." value={
+            coastDist !== null ? coastDist : null
+          } unit="km" unavailable={coastDist === null} />
+          
+          <MetricCell label="Est. Time to Impact" value={
+            timeToImpact !== null ? timeToImpact : null
+          } unit="hrs" unavailable={timeToImpact === null} />
+        </MetricGrid>
+      </div>
+
+      {/* ── CycloneWatch ML status (at bottom) ── */}
       <div className="glass-card rounded-xl p-4">
         <SectionHeader title="CycloneWatch ML" badge="ML PREDICTION" badgeVariant="ml" />
         <p className="text-[11px] text-text-muted leading-relaxed">
@@ -191,24 +209,6 @@ function LiveMetrics() {
             <span className="font-mono text-[10px] text-text-secondary">255 km</span>
           </div>
         </div>
-      </div>
-
-      {/* ── Impact Metrics (at bottom) ── */}
-      <div className="glass-card rounded-xl p-4">
-        <SectionHeader title="Impact Metrics" badge="CALCULATED" badgeVariant="ml" />
-        <MetricGrid>
-          <MetricCell label="Risk of Formation" value={
-            hasAtmo && hasOcean && ocean.sst ? Math.min(100, Math.max(0, ((ocean.sst - 26) * 15) + ((atmo.windSpeed || 0) * 0.5))).toFixed(0) : null
-          } unit="%" color={(ocean.sst && ocean.sst > 28) ? 'text-alert' : 'text-amber-400'} unavailable={!hasOcean || !hasAtmo} />
-          
-          <MetricCell label="Nearest Coast Dist." value={
-            coastDist !== null ? coastDist : null
-          } unit="km" unavailable={coastDist === null} />
-          
-          <MetricCell label="Est. Time to Impact" value={
-            timeToImpact !== null ? timeToImpact : null
-          } unit="hrs" unavailable={timeToImpact === null} />
-        </MetricGrid>
       </div>
 
     </div>
@@ -260,9 +260,10 @@ function HistoricalMetrics() {
   // Format confidence nicely to avoid literal 0.0% looking like a bug
   const patternLabel = obs.classification?.pattern?.label || 'unlabeled';
   const rawConf = obs.classification?.pattern?.confidence || 0;
+  const confValue = rawConf * 100;
   const patternConf = rawConf > 0 && rawConf < 0.05 
     ? '< 5.0'
-    : (rawConf * 100).toFixed(1);
+    : confValue.toFixed(1);
 
   return (
     <div className="flex flex-col gap-3">
@@ -296,7 +297,7 @@ function HistoricalMetrics() {
           </div>
           <div className="flex flex-col items-end">
             <span className="text-[10px] text-text-faint uppercase tracking-widest">Alert Level</span>
-            <span className="px-3 py-1 rounded bg-alert/20 text-alert text-xs font-bold border border-alert/30 mt-1 shadow-[0_0_10px_rgba(255,92,92,0.3)]">HIGH</span>
+            <span className="px-2 py-0.5 rounded bg-alert/20 text-alert text-[10px] font-bold border border-alert/30 mt-1 shadow-[0_0_10px_rgba(255,92,92,0.3)]">HIGH</span>
           </div>
         </div>
 
@@ -316,7 +317,7 @@ function HistoricalMetrics() {
           <div className="w-16 h-16 rounded-full border-[3px] border-confidence/30 flex items-center justify-center relative shadow-[0_0_15px_rgba(111,227,180,0.2)]">
             <svg className="absolute inset-0 w-full h-full -rotate-90">
               <circle cx="32" cy="32" r="30" stroke="currentColor" strokeWidth="3" fill="none" className="text-ocean-800" />
-              <circle cx="32" cy="32" r="30" stroke="currentColor" strokeWidth="3" fill="none" className="text-confidence transition-all duration-1000" strokeDasharray={`${parseFloat(patternConf) * 1.88} 188`} />
+              <circle cx="32" cy="32" r="30" stroke="currentColor" strokeWidth="3" fill="none" className="text-confidence transition-all duration-1000" strokeDasharray={`${confValue * 1.88} 188`} />
             </svg>
             <div className="text-center">
               <span className="block text-sm font-bold text-white leading-none">{patternConf}%</span>
