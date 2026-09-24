@@ -18,7 +18,12 @@ export interface LiveData {
     currentDirection: number | null;
     waveHeight:       number | null;
   };
-  cyclone: { active: boolean };
+  cyclone: { 
+    active: boolean;
+    lat?: number;
+    lng?: number;
+    speed?: number;
+  };
 }
 
 export type AppPage = 'home' | 'live' | 'historical' | 'architecture' | 'reports';
@@ -202,7 +207,7 @@ export const useCycloneStore = create<CycloneState>((set, get) => ({
       set({
         liveData: {
           status:      'LIVE',
-          lastUpdated: new Date().toISOString(),
+          lastUpdated: weather.current?.time ? new Date(weather.current.time).toISOString() : new Date().toISOString(),
           atmosphere: {
             windSpeed:     weather.current?.wind_speed_10m     ?? null,
             windDirection: weather.current?.wind_direction_10m ?? null,

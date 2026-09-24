@@ -67,20 +67,22 @@ function LiveMetrics() {
   const [timeToImpact, setTimeToImpact] = useState<number | null>(null);
   const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api';
 
-  // Always compute coast distance from basin center (not gated on cyclone.active)
   useEffect(() => {
-    const lat = liveBasin === 'Bay of Bengal' ? 15.0 : 17.0;
-    const lng = liveBasin === 'Bay of Bengal' ? 88.0 : 68.0;
+    if (!liveData.cyclone.active || !liveData.cyclone.lat || !liveData.cyclone.lng) {
+      setCoastDist(null);
+      setTimeToImpact(null);
+      return;
+    }
     
-    fetch(`${API_BASE}/coastline/distance?lat=${lat}&lon=${lng}`)
+    fetch(`${API_BASE}/coastline/distance?lat=${liveData.cyclone.lat}&lon=${liveData.cyclone.lng}`)
       .then(res => res.json())
       .then(data => {
           setCoastDist(data.distance_km != null ? Math.round(data.distance_km) : null);
-          const speed = 15; // default storm speed km/h
+          const speed = liveData.cyclone.speed || 15;
           setTimeToImpact(data.distance_km != null ? Math.round(data.distance_km / speed) : null);
       })
       .catch(() => { setCoastDist(null); setTimeToImpact(null); });
-  }, [liveBasin, API_BASE]);
+  }, [liveData.cyclone, API_BASE]);
 
   const hasAtmo  = liveData.status === 'LIVE' || liveData.status === 'STALE';
   const hasOcean = hasAtmo;

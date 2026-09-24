@@ -221,9 +221,9 @@ export function LeafletMap({ layers, onCentreClick }: LeafletMapProps) {
         )}
 
         {/* ── Live mode centre indicator ── */}
-        {mode === 'LIVE' && layers.centre && liveData.cyclone.active && (
+        {mode === 'LIVE' && layers.centre && liveData.cyclone.active && liveData.cyclone.lat && liveData.cyclone.lng && (
           <Marker
-            position={[15.0, 88.0]}
+            position={[liveData.cyclone.lat, liveData.cyclone.lng]}
             icon={LiveCentreIcon}
           />
         )}
