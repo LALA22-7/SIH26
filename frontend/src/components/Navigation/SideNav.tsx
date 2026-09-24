@@ -41,9 +41,9 @@ export function SideNav() {
           <img src="/logo.png" alt="CycloneWatch Logo" className="w-full h-full object-cover" />
         </div>
         {!sidebarCollapsed && (
-          <div className="min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
-            <span className="text-white font-bold tracking-wide text-base">CycloneWatch</span>
-            <sub className="text-[9px] text-cyan-400/80 uppercase tracking-widest ml-1">AI-Powered Tracker</sub>
+          <div className="flex flex-col min-w-0 overflow-hidden">
+            <span className="text-white font-bold tracking-wide text-[15px] truncate">CycloneWatch</span>
+            <span className="text-[8.5px] text-cyan-400/80 uppercase tracking-widest mt-0.5 truncate">AI-Powered Tracker</span>
           </div>
         )}
       </div>
@@ -112,10 +112,10 @@ export function SideNav() {
         ref={navRef}
         aria-label="Main navigation"
         className={`
-          ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-56'}
+          ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}
           fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          w-64 lg:w-auto border-r border-ocean-800 bg-ocean-950/95 lg:bg-ocean-950/40
+          w-64 border-r border-ocean-800 bg-ocean-950/95 lg:bg-ocean-950/40
           backdrop-blur-xl lg:backdrop-blur-none
           flex flex-col p-4 transition-all duration-300
         `}
