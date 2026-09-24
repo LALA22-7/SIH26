@@ -50,7 +50,7 @@ function LiveMetrics() {
     <div className="flex flex-col gap-3">
 
       {/* Basin Tabs */}
-      <div className="flex bg-ocean-900/50 rounded-lg p-1 mb-1 shadow-inner border border-ocean-800/50" role="tablist" aria-label="Basin selection">
+      <div className="flex bg-black/60 rounded-lg p-1 mb-1 shadow-inner border border-ocean-800/50" role="tablist" aria-label="Basin selection">
         {(['Bay of Bengal', 'Arabian Sea'] as const).map(basin => (
           <button
             key={basin}

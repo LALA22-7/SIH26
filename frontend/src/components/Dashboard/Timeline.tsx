@@ -35,14 +35,14 @@ export function Timeline() {
         onMouseLeave={stopScroll}
         onTouchStart={() => startScroll('left')}
         onTouchEnd={stopScroll}
-        className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-ocean-950/60 backdrop-blur-xl border border-white/10 text-yellow-300 hover:bg-ocean-800 transition-colors shadow-md"
+        className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-black/80 backdrop-blur-xl border border-white/10 text-yellow-300 hover:bg-ocean-800 transition-colors shadow-md"
         aria-label="Scroll left"
       >
         <ChevronLeft size={18} />
       </button>
 
       <div
-        className="glass-chrome rounded-full px-4 lg:px-6 py-2 shadow-glass relative overflow-hidden flex items-center bg-ocean-950/60 backdrop-blur-xl flex-grow"
+        className="glass-chrome rounded-full px-4 lg:px-6 py-2 shadow-glass relative overflow-hidden flex items-center bg-black/80 backdrop-blur-xl flex-grow"
         role="slider"
         aria-label="Timeline scrubber"
         aria-valuemin={0}
@@ -91,7 +91,7 @@ export function Timeline() {
         onMouseLeave={stopScroll}
         onTouchStart={() => startScroll('right')}
         onTouchEnd={stopScroll}
-        className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-ocean-950/60 backdrop-blur-xl border border-white/10 text-yellow-300 hover:bg-ocean-800 transition-colors shadow-md"
+        className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-black/80 backdrop-blur-xl border border-white/10 text-yellow-300 hover:bg-ocean-800 transition-colors shadow-md"
         aria-label="Scroll right"
       >
         <ChevronRight size={18} />

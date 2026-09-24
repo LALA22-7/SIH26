@@ -134,7 +134,7 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: -6, scale: 0.96 }}
               transition={{ duration: 0.15 }}
-              className="absolute top-0 left-10 w-52 glass-chrome rounded-xl p-3 shadow-glass border border-white/10 bg-ocean-950/60 backdrop-blur-xl"
+              className="absolute top-0 left-10 w-52 glass-chrome rounded-xl p-3 shadow-glass border border-white/10 bg-black/80 backdrop-blur-xl"
               role="group"
               aria-label="Map layer controls"
             >
@@ -211,7 +211,7 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 6, scale: 0.96 }}
               transition={{ duration: 0.15 }}
-              className="absolute bottom-10 right-0 w-48 glass-chrome rounded-xl p-1.5 shadow-glass bg-ocean-950/60 backdrop-blur-xl"
+              className="absolute bottom-10 right-0 w-48 glass-chrome rounded-xl p-1.5 shadow-glass bg-black/80 backdrop-blur-xl"
               role="menu"
             >
               {[
@@ -244,7 +244,7 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
 
       {/* Status badges — top-centre */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex gap-3 pointer-events-none">
-        <div className="glass-pill px-4 py-1 rounded-2xl pointer-events-auto flex flex-col items-center justify-center bg-ocean-950/60 backdrop-blur-xl shadow-md border border-white/10 text-center w-max">
+        <div className="glass-pill px-4 py-1 rounded-2xl pointer-events-auto flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl shadow-md border border-white/10 text-center w-max">
           <span className="font-mono text-[10px] text-yellow-300 font-bold tracking-widest">
             {isLive
               ? (liveData.lastUpdated
@@ -259,7 +259,7 @@ export function SatellitePanel({ onCentreClick }: { onCentreClick?: () => void }
           )}
         </div>
 
-        <div className="glass-pill px-4 py-1 rounded-2xl pointer-events-auto flex items-center justify-center bg-ocean-950/60 backdrop-blur-xl shadow-md border border-white/10 text-center w-max">
+        <div className="glass-pill px-4 py-1 rounded-2xl pointer-events-auto flex items-center justify-center bg-black/80 backdrop-blur-xl shadow-md border border-white/10 text-center w-max">
           <span className="font-sans text-[10px] text-yellow-300 font-bold tracking-widest uppercase">SRC: NASA GIBS</span>
         </div>
       </div>
