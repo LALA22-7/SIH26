@@ -1,14 +1,48 @@
+import { useRef } from 'react';
 import { useCycloneStore } from '../../store/useCycloneStore';
 import { formatTimelineLabel } from '../../lib/formatting';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function Timeline() {
   const { apiReplayData, timelineIndex, setTimelineIndex } = useCycloneStore();
   const steps = apiReplayData?.steps ?? [];
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRafRef = useRef<number | null>(null);
+
+  const startScroll = (direction: 'left' | 'right') => {
+    stopScroll();
+    const scrollStep = () => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollBy({ left: direction === 'left' ? -8 : 8 });
+      }
+      scrollRafRef.current = requestAnimationFrame(scrollStep);
+    };
+    scrollRafRef.current = requestAnimationFrame(scrollStep);
+  };
+
+  const stopScroll = () => {
+    if (scrollRafRef.current !== null) {
+      cancelAnimationFrame(scrollRafRef.current);
+      scrollRafRef.current = null;
+    }
+  };
 
   return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 w-full max-w-3xl px-4">
+    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 w-full max-w-3xl px-4 flex items-center justify-center gap-3">
+      <button
+        onMouseDown={() => startScroll('left')}
+        onMouseUp={stopScroll}
+        onMouseLeave={stopScroll}
+        onTouchStart={() => startScroll('left')}
+        onTouchEnd={stopScroll}
+        className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-ocean-950/60 backdrop-blur-xl border border-white/10 text-yellow-300 hover:bg-ocean-800 transition-colors shadow-md"
+        aria-label="Scroll left"
+      >
+        <ChevronLeft size={18} />
+      </button>
+
       <div
-        className="glass-chrome rounded-full px-4 lg:px-6 py-2 shadow-glass relative overflow-hidden flex items-center bg-ocean-950/60 backdrop-blur-xl"
+        className="glass-chrome rounded-full px-4 lg:px-6 py-2 shadow-glass relative overflow-hidden flex items-center bg-ocean-950/60 backdrop-blur-xl flex-grow"
         role="slider"
         aria-label="Timeline scrubber"
         aria-valuemin={0}
@@ -17,6 +51,7 @@ export function Timeline() {
       >
         {/* Scrollable Container */}
         <div
+          ref={scrollRef}
           className="w-full overflow-x-auto no-scrollbar flex items-center gap-3 relative py-1.5"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
@@ -49,6 +84,18 @@ export function Timeline() {
           })}
         </div>
       </div>
+
+      <button
+        onMouseDown={() => startScroll('right')}
+        onMouseUp={stopScroll}
+        onMouseLeave={stopScroll}
+        onTouchStart={() => startScroll('right')}
+        onTouchEnd={stopScroll}
+        className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-ocean-950/60 backdrop-blur-xl border border-white/10 text-yellow-300 hover:bg-ocean-800 transition-colors shadow-md"
+        aria-label="Scroll right"
+      >
+        <ChevronRight size={18} />
+      </button>
     </div>
   );
 }
