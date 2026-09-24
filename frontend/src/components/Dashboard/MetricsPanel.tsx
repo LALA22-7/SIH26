@@ -13,7 +13,7 @@ import { Activity } from 'lucide-react';
 import { useCycloneStore } from '../../store/useCycloneStore';
 import { CYCLONES, PATTERN_LABELS, BASELINES } from '../../data/cyclones';
 import { SectionHeader, MetricCell, MetricGrid, GlassCard, Badge } from '../ui';
-import { formatIST, formatTimeShort } from '../../lib/formatting';
+import { formatTimeShort } from '../../lib/formatting';
 import { estimateStormSpeed } from '../../lib/geo';
 import { fetchCoastlineDistance } from '../../lib/api';
 
